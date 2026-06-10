@@ -1,0 +1,407 @@
+import type { Locale } from '../ai/provider';
+
+// 경량 i18n 사전 (라이브러리 없음). {var} 보간 지원.
+// 생성 콘텐츠(노트/퀴즈 등)는 프롬프트 locale 로 별도 처리됨.
+
+const ko: Record<string, string> = {
+  // 공통
+  'common.add': '추가',
+  'common.delete': '삭제',
+  'common.copyMd': 'MD 복사',
+  'common.copied': '복사됨',
+  'common.copyAllMd': '전체 MD 복사',
+  'common.savePng': 'PNG 저장',
+  'common.home': '홈',
+  'common.backHome': '홈으로 돌아가기',
+  'common.loading': '불러오는 중…',
+  'common.rendering': '렌더링 중…',
+  'common.save': '저장',
+  'common.cancel': '취소',
+  'common.edit': '편집',
+  'common.preview': '미리보기',
+
+  // 헤더 / 테마 / 언어
+  'header.menuOpen': '메뉴 열기',
+  'header.openSettings': '설정 열기',
+  'header.theme': '테마: {name} — 클릭하여 전환',
+  'header.language': '언어 전환 (현재 한국어)',
+  'theme.light': '라이트',
+  'theme.dark': '다크',
+  'theme.system': '시스템',
+
+  // 설정
+  'settings.title': '설정',
+  'settings.theme': '테마',
+  'settings.language': '언어',
+  'settings.apiKey': 'Gemini API 키 (BYOK)',
+  'settings.show': '표시',
+  'settings.hide': '숨김',
+  'settings.keyNotice':
+    '키는 이 브라우저(localStorage)에만 저장되며 자체 서버로 전송되지 않습니다. 오디오·영상 업로드와 생성에 사용됩니다.',
+  'settings.getKey': '키 발급',
+  'settings.model': '생성 모델',
+  'settings.modelNote':
+    '한도 초과(429)·크레딧 소진 시 더 가벼운 모델(Flash-Lite)로 바꿔 보세요. Pro 는 무료 한도가 없습니다.',
+
+  // 푸터 / 404 / 스킵
+  'footer.tagline': 'StudyForge — 학습 자료 생성기 · 오픈소스(BYOK)',
+  'notFound.title': '페이지를 찾을 수 없습니다',
+  'skip.toContent': '본문으로 건너뛰기',
+
+  // 사이드바 / 드로어
+  'sidebar.newNotebook': '새 노트북',
+  'sidebar.mainMenu': '주요 메뉴',
+  'sidebar.notebooks': '노트북',
+  'sidebar.empty': '아직 노트북이 없습니다. 자료를 올려 첫 노트북을 만들어 보세요.',
+  'drawer.menu': '메뉴',
+  'drawer.close': '메뉴 닫기',
+
+  // 홈
+  'home.title': '학습 자료 생성기',
+  'home.subtitle':
+    '강의·문서·영상·녹음을 넣으면 구조화 노트, 마인드맵, 퀴즈, 플래시카드, 팟캐스트를 학습자 수준에 맞춰 만들어 드립니다. Notion 호환 Markdown 으로 내보내세요.',
+  'home.newNotebook': '새 노트북 만들기',
+  'home.sourceText': '텍스트 직접 입력',
+  'home.textPlaceholder': '학습할 내용을 붙여넣고 ‘텍스트 추가’를 누르세요.',
+  'home.addText': '텍스트 추가',
+  'home.genReady': '준비된 자료 {n}개로 노트·마인드맵을 생성합니다.',
+  'home.genEmpty': '먼저 자료를 추가하세요.',
+  'home.generate': '생성하기',
+  'home.generating': '생성 중…',
+  'home.myNotebooks': '내 노트북',
+  'home.notebooksEmpty': '아직 저장된 노트북이 없습니다. 자료를 추가하고 생성하면 여기에 보관됩니다.',
+
+  // 인제스트
+  'dropzone.text': '파일을 끌어다 놓거나 클릭해서 선택',
+  'dropzone.formats': 'PDF · DOCX · HWPX · HWP · TXT · MD · 오디오 · 영상',
+  'dropzone.fileLabel': '파일 선택',
+  'youtube.label': '유튜브 링크',
+  'youtube.invalid': '유효한 유튜브 URL 이 아닙니다.',
+  'depth.legend': '학습 깊이',
+  'depth.beginner': '입문',
+  'depth.beginnerDesc': '비유 중심, 용어 풀이',
+  'depth.intermediate': '중급',
+  'depth.intermediateDesc': '표준 깊이, 핵심 메커니즘',
+  'depth.expert': '심화',
+  'depth.expertDesc': '수식·엣지케이스·한계까지',
+  'artifacts.legend': '생성할 산출물',
+  'artifacts.hint':
+    '투입 시점에 산출물을 켜고 끄면 비용·시간을 아낄 수 있습니다. (팟캐스트는 스크립트 생성 후, 탭에서 음성 합성을 별도 실행)',
+
+  // 산출물 이름
+  'artifact.notes': '노트',
+  'artifact.mindmap': '마인드맵',
+  'artifact.quiz': '퀴즈',
+  'artifact.flashcards': '플래시카드',
+  'artifact.podcast': '팟캐스트',
+
+  // 소스 목록
+  'sourceList.title': '추가된 자료 {n}',
+  'sourceList.clear': '모두 비우기',
+  'sourceList.processing': '처리 중…',
+  'sourceList.chars': '글자 수 {n}',
+  'sourceList.linkReady': '링크 준비됨',
+  'sourceList.uploaded': '업로드 완료',
+  'sourceList.previewOpen': '텍스트 미리보기',
+  'sourceList.previewClose': '미리보기 닫기',
+  'sourceList.errorCount': '{n}개 자료에서 오류가 발생했습니다. 메시지를 확인해 주세요.',
+  'sourceList.remove': '{title} 제거',
+  'kind.text': '텍스트',
+  'kind.audio': '오디오',
+  'kind.video': '영상',
+
+  // 노트북
+  'notebook.label': '노트북',
+  'notebook.notFound': '노트북을 찾을 수 없습니다',
+  'notebook.notFoundDesc':
+    '저장된 노트북이 없습니다(삭제되었거나 다른 브라우저). 홈에서 자료를 추가하고 생성해 주세요.',
+  'notebook.sourceCount': '자료 {n}개',
+  'notebook.shareLink': '공유',
+  'notebook.shareCopied': '공유 링크가 클립보드에 복사됐습니다:',
+  'notebook.rename': '제목 변경',
+  'notebook.renamePlaceholder': '노트북 제목',
+  'notebook.imported': '내 보관함에 저장했습니다. 사본을 편집할 수 있어요.',
+
+  // 탭 / 산출물 뷰
+  'tabs.summary': '요약',
+  'tabs.detailed': '상세',
+  'tabs.noArtifacts': '생성된 산출물이 없습니다.',
+  'tabs.notGenerated': '{name}이(가) 생성되지 않았습니다.',
+  'tabs.genFailed': '{name} 생성 실패: {msg}',
+
+  // 퀴즈
+  'quiz.grade': '채점하기',
+  'quiz.retry': '다시 풀기',
+  'quiz.score': '점수 {score} / {total}',
+  'quiz.answered': '{n}/{total} 응답',
+  'quiz.correct': '정답',
+  'quiz.wrong': '오답',
+  'quiz.answerIs': '정답: {answer}',
+  'quiz.shortPlaceholder': '답 입력',
+  'quiz.true': '참',
+  'quiz.false': '거짓',
+  'quiz.shortAria': '{n}번 단답 입력',
+
+  // 플래시카드
+  'flash.front': '앞',
+  'flash.back': '뒤',
+  'flash.flipHint': '클릭/Enter 로 뒤집기',
+  'flash.flipAria': '카드 뒤집기',
+  'flash.frontAria': '앞면 보기',
+  'flash.known': '안다',
+  'flash.unknown': '모른다',
+  'flash.knownCount': '안다 {n}',
+  'flash.prev': '이전',
+  'flash.next': '다음',
+  'flash.shuffle': '셔플',
+
+  // 팟캐스트
+  'podcast.turns': '2인 대담 · {n}턴',
+  'podcast.synthesize': '음성 생성',
+  'podcast.synthesizing': '음성 합성 중…',
+  'podcast.synthNote':
+    '멀티스피커 음성을 합성하는 중입니다. 길이에 따라 수십 초가 걸릴 수 있어요(TTS는 유료 한도).',
+  'podcast.download': 'WAV 다운로드',
+  'podcast.audioUnsupported': '오디오 재생을 지원하지 않는 브라우저입니다.',
+  'podcast.needKey': '음성 합성에는 Gemini API 키가 필요합니다. 설정에서 키를 입력하세요.',
+  'podcast.failed': '음성 합성에 실패했습니다.',
+
+  // 공유
+  'share.readonly': '읽기 전용 공유',
+  'share.notConfigured': '이 배포에는 공유 서버(Worker)가 설정되지 않았습니다.',
+  'share.cannotOpen': '공유 노트를 열 수 없습니다',
+  'share.readonlyNote': '읽기 전용 공유 노트',
+  'share.homeLink': 'StudyForge 홈',
+  'share.title': '공유',
+  'share.mode': '공유 범위',
+  'share.modeReadonly': '읽기 전용',
+  'share.modeReadonlyDesc': '받는 사람은 보기만 할 수 있습니다.',
+  'share.modeEditable': '편집 가능',
+  'share.modeEditableDesc': '받는 사람이 내 보관함에 사본을 저장해 편집할 수 있습니다.',
+  'share.create': '링크 생성·복사',
+  'share.creating': '링크 생성 중…',
+  'share.editableBanner': '편집 가능으로 공유된 노트입니다. 내 보관함에 저장하면 사본을 자유롭게 편집할 수 있어요.',
+  'share.saveToLibrary': '내 보관함에 저장 후 편집',
+  'share.saving': '저장 중…',
+
+  // 렌더 경계
+  'render.staleTitle': '앱이 업데이트되어 새로고침이 필요합니다.',
+  'render.staleDesc': '개발 서버 재시작 또는 새 배포로 모듈이 갱신되었습니다.',
+  'render.refresh': '새로고침',
+  'render.failed': '{label} 렌더 중 오류가 발생했습니다.',
+
+  // 생성 오류(스토어)
+  'gen.noSources': '생성할 준비된 자료가 없습니다. 자료를 먼저 추가하세요.',
+  'gen.noKey': 'Gemini API 키가 필요합니다. 설정(우측 상단)에서 키를 입력하세요.',
+  'gen.noToggle': '생성할 산출물을 하나 이상 켜세요.',
+  'gen.failed': '생성에 실패했습니다.',
+  'notebook.shareFailed': '공유 링크 생성에 실패했습니다.',
+  'share.loadFailed': '불러오기에 실패했습니다.',
+  'render.thisArea': '이 영역',
+  'code.copy': '복사',
+  'code.copyAria': '코드 복사',
+  'common.close': '닫기',
+  'mermaid.renderFailed': 'mermaid · 렌더 실패(원문 표시)',
+  'mindmap.saveSvg': 'SVG 저장',
+};
+
+const en: Record<string, string> = {
+  'common.add': 'Add',
+  'common.delete': 'Delete',
+  'common.copyMd': 'Copy MD',
+  'common.copied': 'Copied',
+  'common.copyAllMd': 'Copy all MD',
+  'common.savePng': 'Save PNG',
+  'common.home': 'Home',
+  'common.backHome': 'Back to home',
+  'common.loading': 'Loading…',
+  'common.rendering': 'Rendering…',
+  'common.save': 'Save',
+  'common.cancel': 'Cancel',
+  'common.edit': 'Edit',
+  'common.preview': 'Preview',
+
+  'header.menuOpen': 'Open menu',
+  'header.openSettings': 'Open settings',
+  'header.theme': 'Theme: {name} — click to switch',
+  'header.language': 'Switch language (currently English)',
+  'theme.light': 'Light',
+  'theme.dark': 'Dark',
+  'theme.system': 'System',
+
+  'settings.title': 'Settings',
+  'settings.theme': 'Theme',
+  'settings.language': 'Language',
+  'settings.apiKey': 'Gemini API key (BYOK)',
+  'settings.show': 'Show',
+  'settings.hide': 'Hide',
+  'settings.keyNotice':
+    'Your key is stored only in this browser (localStorage) and is never sent to our servers. Used for audio/video upload and generation.',
+  'settings.getKey': 'Get a key',
+  'settings.model': 'Generation model',
+  'settings.modelNote':
+    'On quota errors (429) or depleted credits, switch to a lighter model (Flash-Lite). Pro has no free tier.',
+
+  'footer.tagline': 'StudyForge — study material generator · Open source (BYOK)',
+  'notFound.title': 'Page not found',
+  'skip.toContent': 'Skip to content',
+
+  'sidebar.newNotebook': 'New notebook',
+  'sidebar.mainMenu': 'Main menu',
+  'sidebar.notebooks': 'Notebooks',
+  'sidebar.empty': 'No notebooks yet. Add material to create your first one.',
+  'drawer.menu': 'Menu',
+  'drawer.close': 'Close menu',
+
+  'home.title': 'Study Material Generator',
+  'home.subtitle':
+    'Drop in lectures, documents, videos, or recordings and get structured notes, a mindmap, quizzes, flashcards, and a podcast — tailored to your level. Export Notion-compatible Markdown.',
+  'home.newNotebook': 'Create a notebook',
+  'home.sourceText': 'Paste text',
+  'home.textPlaceholder': 'Paste your material and click “Add text”.',
+  'home.addText': 'Add text',
+  'home.genReady': 'Generate notes & mindmap from {n} ready source(s).',
+  'home.genEmpty': 'Add material first.',
+  'home.generate': 'Generate',
+  'home.generating': 'Generating…',
+  'home.myNotebooks': 'My notebooks',
+  'home.notebooksEmpty': 'No saved notebooks yet. Generate one and it will be saved here.',
+
+  'dropzone.text': 'Drag & drop files or click to choose',
+  'dropzone.formats': 'PDF · DOCX · HWPX · HWP · TXT · MD · audio · video',
+  'dropzone.fileLabel': 'Choose files',
+  'youtube.label': 'YouTube link',
+  'youtube.invalid': 'Not a valid YouTube URL.',
+  'depth.legend': 'Depth',
+  'depth.beginner': 'Beginner',
+  'depth.beginnerDesc': 'Analogies, term explanations',
+  'depth.intermediate': 'Intermediate',
+  'depth.intermediateDesc': 'Standard depth, core mechanisms',
+  'depth.expert': 'Expert',
+  'depth.expertDesc': 'Formulas, edge cases, limits',
+  'artifacts.legend': 'Artifacts to generate',
+  'artifacts.hint':
+    'Toggle artifacts at submit time to save cost and time. (Podcast audio is synthesized separately in its tab after the script.)',
+
+  'artifact.notes': 'Notes',
+  'artifact.mindmap': 'Mindmap',
+  'artifact.quiz': 'Quiz',
+  'artifact.flashcards': 'Flashcards',
+  'artifact.podcast': 'Podcast',
+
+  'sourceList.title': 'Added sources: {n}',
+  'sourceList.clear': 'Clear all',
+  'sourceList.processing': 'Processing…',
+  'sourceList.chars': '{n} chars',
+  'sourceList.linkReady': 'Link ready',
+  'sourceList.uploaded': 'Uploaded',
+  'sourceList.previewOpen': 'Preview text',
+  'sourceList.previewClose': 'Close preview',
+  'sourceList.errorCount': '{n} source(s) had errors. Check the messages.',
+  'sourceList.remove': 'Remove {title}',
+  'kind.text': 'Text',
+  'kind.audio': 'Audio',
+  'kind.video': 'Video',
+
+  'notebook.label': 'Notebook',
+  'notebook.notFound': 'Notebook not found',
+  'notebook.notFoundDesc':
+    'No saved notebook (deleted, or a different browser). Add material and generate from home.',
+  'notebook.sourceCount': '{n} source(s)',
+  'notebook.shareLink': 'Share',
+  'notebook.shareCopied': 'Share link copied to clipboard:',
+  'notebook.rename': 'Rename',
+  'notebook.renamePlaceholder': 'Notebook title',
+  'notebook.imported': 'Saved to your library. You can edit your copy.',
+
+  'tabs.summary': 'Summary',
+  'tabs.detailed': 'Detailed',
+  'tabs.noArtifacts': 'No artifacts were generated.',
+  'tabs.notGenerated': '{name} was not generated.',
+  'tabs.genFailed': '{name} generation failed: {msg}',
+
+  'quiz.grade': 'Grade',
+  'quiz.retry': 'Retry',
+  'quiz.score': 'Score {score} / {total}',
+  'quiz.answered': '{n}/{total} answered',
+  'quiz.correct': 'Correct',
+  'quiz.wrong': 'Wrong',
+  'quiz.answerIs': 'Answer: {answer}',
+  'quiz.shortPlaceholder': 'Your answer',
+  'quiz.true': 'True',
+  'quiz.false': 'False',
+  'quiz.shortAria': 'Short answer for #{n}',
+
+  'flash.front': 'Front',
+  'flash.back': 'Back',
+  'flash.flipHint': 'Click/Enter to flip',
+  'flash.flipAria': 'Flip card',
+  'flash.frontAria': 'Show front',
+  'flash.known': 'Known',
+  'flash.unknown': 'Unknown',
+  'flash.knownCount': 'Known {n}',
+  'flash.prev': 'Prev',
+  'flash.next': 'Next',
+  'flash.shuffle': 'Shuffle',
+
+  'podcast.turns': '2-host dialogue · {n} turns',
+  'podcast.synthesize': 'Generate audio',
+  'podcast.synthesizing': 'Synthesizing…',
+  'podcast.synthNote':
+    'Synthesizing multi-speaker audio. This may take tens of seconds depending on length (TTS is a paid quota).',
+  'podcast.download': 'Download WAV',
+  'podcast.audioUnsupported': 'Your browser does not support audio playback.',
+  'podcast.needKey': 'Audio synthesis needs a Gemini API key. Enter one in Settings.',
+  'podcast.failed': 'Audio synthesis failed.',
+
+  'share.readonly': 'Read-only share',
+  'share.notConfigured': 'This deployment has no share server (Worker) configured.',
+  'share.cannotOpen': 'Cannot open shared note',
+  'share.readonlyNote': 'Read-only shared note',
+  'share.homeLink': 'StudyForge home',
+  'share.title': 'Share',
+  'share.mode': 'Access',
+  'share.modeReadonly': 'Read-only',
+  'share.modeReadonlyDesc': 'Recipients can only view.',
+  'share.modeEditable': 'Editable',
+  'share.modeEditableDesc': 'Recipients can save a copy to their library and edit it.',
+  'share.create': 'Create & copy link',
+  'share.creating': 'Creating link…',
+  'share.editableBanner': 'This note was shared as editable. Save it to your library to freely edit your own copy.',
+  'share.saveToLibrary': 'Save to my library & edit',
+  'share.saving': 'Saving…',
+
+  'render.staleTitle': 'The app updated — a refresh is needed.',
+  'render.staleDesc': 'Modules changed due to a dev-server restart or a new deployment.',
+  'render.refresh': 'Refresh',
+  'render.failed': 'Error while rendering {label}.',
+
+  'gen.noSources': 'No ready sources to generate from. Add material first.',
+  'gen.noKey': 'A Gemini API key is required. Enter one in Settings (top right).',
+  'gen.noToggle': 'Turn on at least one artifact to generate.',
+  'gen.failed': 'Generation failed.',
+  'notebook.shareFailed': 'Failed to create the share link.',
+  'share.loadFailed': 'Failed to load.',
+  'render.thisArea': 'this area',
+  'code.copy': 'Copy',
+  'code.copyAria': 'Copy code',
+  'common.close': 'Close',
+  'mermaid.renderFailed': 'mermaid · render failed (source shown)',
+  'mindmap.saveSvg': 'Save SVG',
+};
+
+export const dict: Record<Locale, Record<string, string>> = { ko, en };
+
+export function translate(
+  locale: Locale,
+  key: string,
+  vars?: Record<string, string | number>,
+): string {
+  let s = dict[locale]?.[key] ?? dict.ko[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+    }
+  }
+  return s;
+}

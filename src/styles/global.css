@@ -1,0 +1,347 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* 클래스 기반 다크모드: html.dark 일 때 dark: 유틸리티 적용 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 토큰 → Tailwind 테마 매핑 (inline: 유틸리티가 런타임 CSS 변수를 직접 참조).
+   bg-bg / text-fg / text-muted / border-border / bg-surface / text-accent /
+   text-success / text-error / font-sans / font-mono / rounded-lg / max-w-reading 사용 가능. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-success: var(--success);
+  --color-error: var(--error);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-lg: var(--radius);
+  --container-reading: 72ch; /* 읽기 영역 max-width */
+}
+
+@layer base {
+  /* 기본 보더 색을 토큰으로 (v4 기본값은 currentColor) */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  /* 키보드 포커스 가시화 (접근성) */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+/* prefers-reduced-motion: 모션 최소화 (디자인 백서 §7-2) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   콘텐츠 렌더 (MarkdownView · 코드 · Mermaid · 마인드맵) — HARNESS §4 렌더링 규칙
+   토큰만 사용. 그라데이션/네온/형광/장식 없음.
+   ============================================================ */
+.sf-prose {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+.sf-prose > :first-child {
+  margin-top: 0;
+}
+.sf-prose > :last-child {
+  margin-bottom: 0;
+}
+.sf-prose h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 2rem 0 1rem;
+}
+.sf-prose h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+.sf-prose h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.sf-prose h4 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+.sf-prose p {
+  margin: 0.85rem 0;
+}
+.sf-prose ul,
+.sf-prose ol {
+  margin: 0.85rem 0;
+  padding-left: 1.5rem;
+}
+.sf-prose ul {
+  list-style: disc;
+}
+.sf-prose ol {
+  list-style: decimal;
+}
+.sf-prose li {
+  margin: 0.3rem 0;
+}
+.sf-prose li > ul,
+.sf-prose li > ol {
+  margin: 0.3rem 0;
+}
+.sf-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.sf-prose strong {
+  font-weight: 600;
+}
+.sf-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+.sf-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+/* 콜아웃 — 좌측 보더 + 무채 배경 (이모지/형광 금지) */
+.sf-prose blockquote {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 3px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.sf-prose blockquote p {
+  margin: 0.35rem 0;
+}
+/* 표 — 가벼운 보더, 행 구분선만(zebra 없음), 좁은 화면 가로 스크롤 격리 */
+.sf-prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.95em;
+}
+.sf-prose th,
+.sf-prose td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+.sf-prose thead th {
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+}
+.sf-inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  overflow-wrap: break-word;
+}
+
+/* 코드블록 */
+.sf-code {
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.sf-code__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.sf-code__lang {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+.sf-code__copy {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.3rem;
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease;
+}
+.sf-code__copy:hover {
+  background: var(--bg);
+  color: var(--fg);
+}
+.sf-code__body {
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+.sf-code__body pre,
+.sf-code__body .shiki {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: transparent !important;
+}
+.sf-code__body code {
+  font-family: var(--font-mono);
+}
+.sf-code__body--plain {
+  padding: 0.85rem 1rem;
+  color: var(--fg);
+  white-space: pre;
+  font-family: var(--font-mono);
+}
+/* Shiki 듀얼 테마 (defaultColor:false → CSS 로 라이트/다크 전환) */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* Mermaid */
+.sf-mermaid {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-x: auto;
+  text-align: center;
+  min-height: 2rem;
+}
+.sf-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 마인드맵 (markmap) */
+.sf-mindmap {
+  --markmap-text-color: var(--fg);
+  --markmap-font: var(--font-sans);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.sf-mindmap__bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.sf-mindmap__svg {
+  display: block;
+  width: 100%;
+  height: 60vh;
+  min-height: 360px;
+}
+.sf-mindmap__svg text {
+  fill: var(--fg);
+}
+.sf-mindmap__svg .markmap-foreign {
+  color: var(--fg);
+}
+
+/* 플래시카드 (절제된 3D flip) */
+.sf-card {
+  perspective: 1200px;
+}
+.sf-card__inner {
+  position: relative;
+  width: 100%;
+  min-height: 13rem;
+  transform-style: preserve-3d;
+  transition: transform 150ms ease;
+}
+.sf-card__inner--flipped {
+  transform: rotateY(180deg);
+}
+.sf-card__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: auto;
+}
+.sf-card:hover .sf-card__face {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.sf-card__face--back {
+  transform: rotateY(180deg);
+}

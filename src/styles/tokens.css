@@ -1,0 +1,43 @@
+/* ============================================================
+   StudyForge 디자인 토큰 — 단일 출처 (docs/HARNESS.md §4 · 백서 §5)
+   여기서만 색/형태 값을 정의한다. 컴포넌트는 토큰 유틸리티만 사용.
+   안티-클리셰: 무채(zinc) 기반 + 단일 액센트(blue). 그라데이션/네온/글래스 금지.
+   ============================================================ */
+
+:root {
+  /* 표면 / 텍스트 / 보더 (무채 위계) */
+  --bg: #fafafa; /* 페이지 배경 */
+  --fg: #18181b; /* 본문 텍스트 (zinc-900) */
+  --muted: #71717a; /* 보조 텍스트 (zinc-500) */
+  --border: #e4e4e7; /* 보더 (zinc-200) */
+  --surface: #ffffff; /* 카드/패널 */
+  --surface-2: #f4f4f5; /* hover/보조 표면 (zinc-100) */
+
+  /* 기능색 (단일 액센트 + 정답/오답) */
+  --accent: #2563eb; /* blue-600 — 포커스·링크·주요 액션 */
+  --accent-fg: #ffffff; /* 액센트 위 텍스트 */
+  --success: #059669; /* emerald-600 — 정답/성공 */
+  --error: #e11d48; /* rose-600 — 오답/오류 */
+
+  /* 형태 */
+  --radius: 0.5rem; /* 카드/버튼/입력 동일 */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
+
+.dark {
+  --bg: #09090b; /* zinc-950 */
+  --fg: #f4f4f5; /* zinc-100 */
+  --muted: #a1a1aa; /* zinc-400 — 어두운 배경에서 AA 대비 확보 */
+  --border: #27272a; /* zinc-800 */
+  --surface: #18181b; /* zinc-900 */
+  --surface-2: #27272a; /* zinc-800 */
+
+  /* 어두운 배경 대비를 위해 같은 hue 의 밝은 단계로만 조정 (새 색 도입 아님) */
+  --accent: #3b82f6; /* blue-500 */
+  --accent-fg: #ffffff;
+  --success: #10b981; /* emerald-500 */
+  --error: #f43f5e; /* rose-500 */
+}

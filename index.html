@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="강의·문서·영상·녹음을 넣으면 구조화 노트·마인드맵·퀴즈·플래시카드·팟캐스트를 만들어 주는 BYOK 학습 자료 생성기."
+    />
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="StudyForge — 학습 자료 생성기" />
+    <meta
+      property="og:description"
+      content="강의·문서·영상·녹음 → 노트·마인드맵·퀴즈·플래시카드·팟캐스트. BYOK 학습 자료 생성기."
+    />
+    <title>StudyForge — 학습 자료 생성기</title>
+
+    <!-- 본문 폰트는 시스템 스택 사용(외부 CDN 의존 없음 · 오프라인/성능 우선).
+         Pretendard 가 로컬에 설치돼 있으면 우선 적용되며, 필요 시 M6에서 셀프호스팅 추가. -->
+
+    <!-- FOUC 방지: 첫 페인트 전에 테마 클래스 적용 (useTheme 와 동일 로직) -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('sf-theme'); // 'light' | 'dark' | 'system'
+          var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var dark = saved === 'dark' || ((saved === 'system' || !saved) && sysDark);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+# StudyForge 공유 링크 Worker 설정.
+# 1) npx wrangler kv namespace create SHARE_KV   → 출력된 id 를 아래 id 에 기입
+# 2) npx wrangler deploy
+# 3) 배포된 URL 을 앱 .env 의 VITE_SHARE_WORKER_URL 에 설정 후 앱 재빌드
+
+name = "studyforge-share"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+[[kv_namespaces]]
+binding = "SHARE_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

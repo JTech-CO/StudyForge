@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시에 하나의 배포만 진행 (진행 중인 런은 취소하지 않음)
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # npm ci 대신 install: lock 의 플랫폼별 옵셔널 의존성(@tailwindcss/oxide 등)이
+      # 호스트(Windows)와 CI(linux) 간 달라 ci 가 불일치로 실패 → install 로 견고하게 해석.
+      - run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
+        env:
+          # 프로젝트 사이트 base path 자동 주입: /<repo>/
+          BASE_PATH: /${{ github.event.repository.name }}/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
