@@ -17,7 +17,7 @@ export function ArtifactToggles() {
   return (
     <fieldset>
       <legend className="text-sm font-medium text-fg">{t('artifacts.legend')}</legend>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 grid grid-cols-2 gap-2">
         {ARTIFACTS.map((a) => (
           <label key={a.id} className="cursor-pointer">
             <input
@@ -26,7 +26,7 @@ export function ArtifactToggles() {
               onChange={() => toggleArtifact(a.id)}
               className="peer sr-only"
             />
-            <span className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+            <span className="flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
               {t(a.labelKey)}
             </span>
           </label>

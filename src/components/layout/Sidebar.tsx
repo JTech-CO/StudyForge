@@ -12,7 +12,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const notebooks = useStore((s) => s.notebooks);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-4">
+    <div className="flex h-full flex-col gap-5 p-3">
       <Button
         className="w-full"
         onClick={() => {
@@ -42,9 +42,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <section className="flex min-h-0 flex-1 flex-col gap-2" aria-label={t('sidebar.notebooks')}>
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t('sidebar.notebooks')}</h2>
+        <h2 className="border-b border-border px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t('sidebar.notebooks')}</h2>
         {notebooks.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border px-3 py-6 text-sm text-muted">
+          <p className="rounded-lg border border-dashed border-border bg-bg px-3 py-6 text-sm text-muted">
             {t('sidebar.empty')}
           </p>
         ) : (
@@ -79,8 +79,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 export function Sidebar() {
   return (
     <aside
-      className="sticky top-14 hidden w-64 shrink-0 self-start overflow-y-auto border-r border-border bg-bg md:block"
-      style={{ maxHeight: 'calc(100dvh - 3.5rem)' }}
+      className="sf-sidebar sticky top-16 hidden w-64 shrink-0 self-start overflow-y-auto border-r border-border bg-surface lg:block"
     >
       <SidebarNav />
     </aside>

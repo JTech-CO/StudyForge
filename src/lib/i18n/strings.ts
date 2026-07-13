@@ -59,6 +59,16 @@ const ko: Record<string, string> = {
   'settings.mediaProviderNotice':
     '유튜브·오디오·영상 원본 처리와 팟캐스트 음성 합성은 Gemini 전용입니다. 텍스트 생성은 현재 선택한 제공자를 사용합니다.',
 
+  // 법적 고지
+  'footer.legal': '법적 고지',
+  'legal.kicker': '법적 고지',
+  'legal.privacy': '개인정보처리방침',
+  'legal.terms': '이용약관',
+  'legal.updated': '시행일: {date}',
+  'legal.contact': '개인정보 및 약관 관련 문의',
+  'legal.navigation': '법적 고지 탐색',
+  'legal.backHome': '홈으로 돌아가기',
+
   // 푸터 / 404 / 스킵
   'footer.tagline': 'StudyForge — 학습 자료 생성기 · 오픈소스(BYOK)',
   'notFound.title': '페이지를 찾을 수 없습니다',
@@ -73,14 +83,17 @@ const ko: Record<string, string> = {
   'drawer.close': '메뉴 닫기',
 
   // 홈
+  'home.workspace': 'AI 학습 워크스페이스',
   'home.title': '학습 자료 생성기',
   'home.subtitle':
     '강의·문서·영상·녹음을 넣으면 구조화 노트, 마인드맵, 퀴즈, 플래시카드, 팟캐스트를 학습자 수준에 맞춰 만들어 드립니다. Notion 호환 Markdown 으로 내보내세요.',
   'home.newNotebook': '새 노트북 만들기',
+  'home.sourceStep': '자료 구성',
+  'home.setupStep': '생성 설정',
   'home.sourceText': '텍스트 직접 입력',
   'home.textPlaceholder': '학습할 내용을 붙여넣고 ‘텍스트 추가’를 누르세요.',
   'home.addText': '텍스트 추가',
-  'home.genReady': '준비된 자료 {n}개로 노트·마인드맵을 생성합니다.',
+  'home.genReady': '준비된 자료 {n}개로 선택한 학습 자료를 생성합니다.',
   'home.genEmpty': '먼저 자료를 추가하세요.',
   'home.generate': '생성하기',
   'home.generating': '생성 중…',
@@ -284,6 +297,15 @@ const en: Record<string, string> = {
   'settings.mediaProviderNotice':
     'YouTube, audio/video source processing, and podcast speech synthesis remain Gemini-only. Text artifacts use the selected provider.',
 
+  'footer.legal': 'Legal information',
+  'legal.kicker': 'Legal information',
+  'legal.privacy': 'Privacy Policy',
+  'legal.terms': 'Terms of Use',
+  'legal.updated': 'Effective: {date}',
+  'legal.contact': 'Privacy and terms contact',
+  'legal.navigation': 'Legal navigation',
+  'legal.backHome': 'Back to home',
+
   'footer.tagline': 'StudyForge — study material generator · Open source (BYOK)',
   'notFound.title': 'Page not found',
   'skip.toContent': 'Skip to content',
@@ -295,14 +317,17 @@ const en: Record<string, string> = {
   'drawer.menu': 'Menu',
   'drawer.close': 'Close menu',
 
+  'home.workspace': 'AI study workspace',
   'home.title': 'Study Material Generator',
   'home.subtitle':
     'Drop in lectures, documents, videos, or recordings and get structured notes, a mindmap, quizzes, flashcards, and a podcast — tailored to your level. Export Notion-compatible Markdown.',
   'home.newNotebook': 'Create a notebook',
+  'home.sourceStep': 'Source material',
+  'home.setupStep': 'Generation setup',
   'home.sourceText': 'Paste text',
   'home.textPlaceholder': 'Paste your material and click “Add text”.',
   'home.addText': 'Add text',
-  'home.genReady': 'Generate notes & mindmap from {n} ready source(s).',
+  'home.genReady': 'Generate selected study materials from {n} ready source(s).',
   'home.genEmpty': 'Add material first.',
   'home.generate': 'Generate',
   'home.generating': 'Generating…',

@@ -44,15 +44,20 @@ export function SourceDropzone() {
           handleFiles(e.dataTransfer.files);
         }}
         className={cx(
-          'flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center transition-colors duration-100',
+          'flex w-full flex-col items-start justify-center gap-3 rounded-lg border border-dashed px-5 py-7 text-left transition-colors duration-100 sm:flex-row sm:items-center',
           dragOver ? 'border-accent bg-accent/10' : 'border-border hover:bg-surface-2',
         )}
       >
-        <span className="text-muted" aria-hidden="true">
-          <Upload size={22} />
+        <span
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted"
+          aria-hidden="true"
+        >
+          <Upload size={20} />
         </span>
-        <span className="text-sm font-medium text-fg">{t('dropzone.text')}</span>
-        <span className="text-xs text-muted">{t('dropzone.formats')}</span>
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-fg">{t('dropzone.text')}</span>
+          <span className="text-xs text-muted">{t('dropzone.formats')}</span>
+        </span>
       </button>
     </div>
   );

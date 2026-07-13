@@ -16,7 +16,7 @@ export function DepthSelector() {
   return (
     <fieldset>
       <legend className="text-sm font-medium text-fg">{t('depth.legend')}</legend>
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="mt-2 grid grid-cols-1 gap-2">
         {DEPTHS.map((d) => (
           <label key={d.id} className="cursor-pointer">
             <input
@@ -27,7 +27,7 @@ export function DepthSelector() {
               onChange={() => setDepth(d.id)}
               className="peer sr-only"
             />
-            <span className="flex flex-col gap-0.5 rounded-lg border border-border px-3 py-2 transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+            <span className="flex flex-col gap-0.5 rounded-lg border border-border bg-surface px-3 py-2 transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
               <span className="text-sm font-medium text-fg">{t(d.labelKey)}</span>
               <span className="text-xs text-muted">{t(d.descKey)}</span>
             </span>

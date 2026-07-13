@@ -68,20 +68,20 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div className="absolute inset-0 bg-overlay" aria-hidden="true" onClick={onClose} />
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        style={{ maxHeight: '90dvh' }}
+
         className={cx(
-          'relative z-10 w-full overflow-y-auto border border-border bg-surface shadow-lg outline-none',
-          'rounded-t-lg sm:max-w-lg sm:rounded-lg',
+          'sf-modal-panel relative z-10 w-full overflow-y-auto border border-border bg-surface outline-none',
+          'rounded-t-lg sm:max-w-xl sm:rounded-lg',
         )}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-surface px-5 py-4">
           <h2 id={titleId} className="text-base font-semibold text-fg">
             {title}
           </h2>

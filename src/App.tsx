@@ -12,6 +12,7 @@ import { PROVIDERS, PROVIDER_MODEL_OPTIONS, providerDefinition } from './lib/ai/
 import type { Locale } from './lib/ai/provider';
 import Home from './pages/Home';
 import Notebook from './pages/Notebook';
+import LegalPage from './pages/Legal';
 
 const THEME_OPTIONS: { id: Theme; key: string }[] = [
   { id: 'light', key: 'theme.light' },
@@ -25,7 +26,7 @@ const LOCALE_OPTIONS: { id: Locale; label: string }[] = [
 ];
 
 const RADIO_SPAN =
-  'flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent';
+  'flex items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent';
 
 function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { theme, setTheme } = useTheme();
@@ -153,7 +154,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder="http://127.0.0.1:11434/v1"
               autoComplete="off"
               spellCheck={false}
-              className="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-fg placeholder:text-muted focus-visible:border-accent"
+              className="sf-field px-3 py-2 font-mono text-sm placeholder:text-muted focus-visible:border-accent"
             />
             <p className="text-xs text-muted">{t('settings.localHint')}</p>
           </section>
@@ -174,7 +175,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
               placeholder={providerInfo.keyPlaceholder}
               autoComplete="off"
               spellCheck={false}
-              className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus-visible:border-accent"
+              className="sf-field min-w-0 flex-1 px-3 py-2 text-sm placeholder:text-muted focus-visible:border-accent"
             />
             <Button
               variant="ghost"
@@ -209,7 +210,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
             placeholder={t('settings.modelPlaceholder')}
             autoComplete="off"
             spellCheck={false}
-            className="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-fg placeholder:text-muted focus-visible:border-accent"
+            className="sf-field px-3 py-2 font-mono text-sm placeholder:text-muted focus-visible:border-accent"
           />
           <datalist id="ai-model-options">
             {modelOptions.map((option) => (
@@ -245,10 +246,21 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
 function Footer() {
   const { t } = useT();
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p>{t('footer.tagline')}</p>
-        <p>v0.1.0</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <nav aria-label={t('footer.legal')} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Link to="/privacy" className="underline underline-offset-2 hover:text-fg">
+              {t('legal.privacy')}
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms" className="underline underline-offset-2 hover:text-fg">
+              {t('legal.terms')}
+            </Link>
+          </nav>
+          <span className="font-mono text-xs">v0.1.0</span>
+        </div>
       </div>
     </footer>
   );
@@ -271,7 +283,7 @@ function Shell() {
 
       <Header onMenuClick={() => setDrawerOpen(true)} onSettingsClick={() => setSettingsOpen(true)} />
 
-      <div className="mx-auto flex w-full max-w-7xl flex-1">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 lg:border-x lg:border-border">
         <Sidebar />
         <main id="main" className="min-w-0 flex-1">
           <Outlet />
@@ -316,6 +328,8 @@ export default function App() {
       <Route element={<Shell />}>
         <Route path="/" element={<Home />} />
         <Route path="/notebook/:id" element={<Notebook />} />
+        <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+        <Route path="/terms" element={<LegalPage kind="terms" />} />
       </Route>
       <Route path="/share/:id" element={<ShareRedirect />} />
       <Route path="*" element={<NotFound />} />

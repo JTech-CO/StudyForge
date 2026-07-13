@@ -12,6 +12,7 @@
   --border: #e4e4e7; /* 보더 (zinc-200) */
   --surface: #ffffff; /* 카드/패널 */
   --surface-2: #f4f4f5; /* hover/보조 표면 (zinc-100) */
+  --overlay: rgb(9 9 11 / 0.58); /* 모달/드로어 스크림 */
 
   /* 기능색 (단일 액센트 + 정답/오답) */
   --accent: #2563eb; /* blue-600 — 포커스·링크·주요 액션 */
@@ -34,6 +35,7 @@
   --border: #27272a; /* zinc-800 */
   --surface: #18181b; /* zinc-900 */
   --surface-2: #27272a; /* zinc-800 */
+  --overlay: rgb(0 0 0 / 0.68);
 
   /* 어두운 배경 대비를 위해 같은 hue 의 밝은 단계로만 조정 (새 색 도입 아님) */
   --accent: #3b82f6; /* blue-500 */

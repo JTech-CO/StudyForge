@@ -33,112 +33,143 @@ export default function Home() {
 
   async function onGenerate() {
     const notebookId = await generate();
-    if (notebookId) navigate(`/notebook/${notebookId}`);
+    if (notebookId) navigate('/notebook/' + notebookId);
   }
 
   return (
     <Container width="wide" className="py-8 sm:py-12">
-      <section className="mb-10 max-w-reading">
+      <section className="sf-page-head mb-8 max-w-reading">
+        <p className="sf-kicker">StudyForge / {t('home.workspace')}</p>
         <h1 className="text-3xl font-bold tracking-tight text-fg sm:text-4xl">{t('home.title')}</h1>
-        <p className="mt-3 text-base text-muted">{t('home.subtitle')}</p>
+        <p className="mt-3 max-w-reading text-base text-muted">{t('home.subtitle')}</p>
       </section>
 
-      <Card className="p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-fg">{t('home.newNotebook')}</h2>
-
-        <div className="mt-4 flex flex-col gap-5">
-          <SourceDropzone />
-
-          <div>
-            <label
-              htmlFor="source-text"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-fg"
-            >
-              <Type size={15} /> {t('home.sourceText')}
-            </label>
-            <textarea
-              id="source-text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={4}
-              placeholder={t('home.textPlaceholder')}
-              className="mt-2 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus-visible:border-accent"
-            />
-            <div className="mt-2 flex justify-end">
-              <Button variant="ghost" size="sm" type="button" onClick={submitText} disabled={!text.trim()}>
-                {t('home.addText')}
-              </Button>
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <div className="flex items-center gap-3 border-b border-border bg-surface-2 px-5 py-4 sm:px-6">
+            <span className="sf-step" aria-hidden="true">
+              01
+            </span>
+            <div>
+              <p className="text-xs font-medium text-muted">{t('home.newNotebook')}</p>
+              <h2 className="text-lg font-semibold text-fg">{t('home.sourceStep')}</h2>
             </div>
           </div>
 
-          <YoutubeInput />
-        </div>
+          <div className="flex flex-col gap-6 p-5 sm:p-6">
+            <SourceDropzone />
 
-        {sources.length > 0 && (
-          <div className="mt-6 border-t border-border pt-5">
-            <SourceList />
+            <div>
+              <label htmlFor="source-text" className="inline-flex items-center gap-1.5 text-sm font-medium text-fg">
+                <Type size={15} /> {t('home.sourceText')}
+              </label>
+              <textarea
+                id="source-text"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                rows={5}
+                placeholder={t('home.textPlaceholder')}
+                className="sf-field mt-2 resize-y px-3 py-2 text-sm placeholder:text-muted focus-visible:border-accent"
+              />
+              <div className="mt-2 flex justify-end">
+                <Button variant="ghost" size="sm" type="button" onClick={submitText} disabled={!text.trim()}>
+                  {t('home.addText')}
+                </Button>
+              </div>
+            </div>
+
+            <YoutubeInput />
+
+            {sources.length > 0 && (
+              <div className="border-t border-border pt-5">
+                <SourceList />
+              </div>
+            )}
           </div>
-        )}
+        </Card>
 
-        <div className="mt-6 flex flex-col gap-5 border-t border-border pt-5">
-          <DepthSelector />
-          <ArtifactToggles />
-        </div>
+        <aside className="lg:sticky lg:top-20">
+          <Card>
+            <div className="flex items-center gap-3 border-b border-border bg-surface-2 px-5 py-4">
+              <span className="sf-step" aria-hidden="true">
+                02
+              </span>
+              <div>
+                <p className="text-xs font-medium text-muted">{t('home.newNotebook')}</p>
+                <h2 className="text-lg font-semibold text-fg">{t('home.setupStep')}</h2>
+              </div>
+            </div>
 
-        <div className="mt-6 border-t border-border pt-5">
-          {genError && (
-            <p
-              className="mb-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-error"
-              role="alert"
-            >
-              {genError}
-            </p>
-          )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted">
-              {readyCount > 0
-                ? t('home.genReady', { n: readyCount })
-                : t('home.genEmpty')}
-            </p>
-            <Button
-              type="button"
-              onClick={onGenerate}
-              loading={isGenerating}
-              disabled={readyCount === 0 || isGenerating}
-            >
-              {isGenerating ? t('home.generating') : t('home.generate')}
-            </Button>
+            <div className="flex flex-col gap-6 p-5">
+              <DepthSelector />
+              <ArtifactToggles />
+            </div>
+
+            <div className="border-t border-border bg-surface-2 p-4">
+              {genError && (
+                <p className="mb-3 border-l-2 border-error pl-3 text-sm text-error" role="alert">
+                  {genError}
+                </p>
+              )}
+              <p className="mb-3 text-sm text-muted">
+                {readyCount > 0 ? t('home.genReady', { n: readyCount }) : t('home.genEmpty')}
+              </p>
+              <Button
+                className="w-full"
+                type="button"
+                onClick={onGenerate}
+                loading={isGenerating}
+                disabled={readyCount === 0 || isGenerating}
+              >
+                {isGenerating ? t('home.generating') : t('home.generate')}
+              </Button>
+            </div>
+          </Card>
+        </aside>
+      </div>
+
+      <section className="mt-12" aria-labelledby="library-title">
+        <div className="flex items-end justify-between gap-4 border-b border-border pb-3">
+          <div>
+            <p className="sf-kicker">{t('home.workspace')}</p>
+            <h2 id="library-title" className="text-xl font-semibold text-fg">
+              {t('home.myNotebooks')}
+            </h2>
           </div>
+          <span className="font-mono text-sm text-muted">{String(notebooks.length).padStart(2, '0')}</span>
         </div>
-      </Card>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold text-fg">{t('home.myNotebooks')}</h2>
         {storageError && (
-          <p className="mt-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-error" role="alert">
+          <p className="mt-4 border-l-2 border-error pl-3 text-sm text-error" role="alert">
             {storageError}
           </p>
         )}
+
         {storageError ? null : notebooks.length === 0 ? (
-          <div className="mt-3 rounded-lg border border-dashed border-border px-4 py-10 text-center">
+          <div className="mt-4 rounded-lg border border-dashed border-border bg-surface px-4 py-12 text-center">
             <p className="text-sm text-muted">{t('home.notebooksEmpty')}</p>
           </div>
         ) : (
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-            {notebooks.map((n) => (
-              <li key={n.id}>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {notebooks.map((notebook, index) => (
+              <li key={notebook.id}>
                 <Link
-                  to={`/notebook/${n.id}`}
-                  className="block rounded-lg border border-border bg-surface px-4 py-3 transition-colors duration-100 hover:bg-surface-2"
+                  to={'/notebook/' + notebook.id}
+                  className="block rounded-lg border border-border border-l-2 border-l-transparent bg-surface px-4 py-3 transition-colors duration-100 hover:border-l-accent hover:bg-surface-2"
                 >
-                  <p className="truncate font-medium text-fg">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-muted">
-                    {new Date(n.createdAt).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <span className="font-mono text-xs text-muted">{String(index + 1).padStart(2, '0')}</span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-fg">{notebook.title}</p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {new Date(notebook.createdAt).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </Link>
               </li>
             ))}

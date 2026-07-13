@@ -40,7 +40,7 @@ export function YoutubeInput() {
           placeholder="https://youtu.be/..."
           aria-invalid={valid === false}
           className={cx(
-            'min-w-0 flex-1 rounded-lg border bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus-visible:border-accent',
+            'sf-field min-w-0 flex-1 px-3 py-2 text-sm placeholder:text-muted focus-visible:border-accent',
             valid === false ? 'border-error' : 'border-border',
           )}
         />

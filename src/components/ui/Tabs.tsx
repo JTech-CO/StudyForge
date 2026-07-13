@@ -43,7 +43,7 @@ export function Tabs({ tabs, active, onChange, idPrefix = 'tab', className }: Ta
       role="tablist"
       aria-orientation="horizontal"
       onKeyDown={onKeyDown}
-      className={cx('flex gap-1 overflow-x-auto border-b border-border', className)}
+      className={cx('flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface-2 p-1', className)}
     >
       {tabs.map((t) => {
         const selected = t.id === active;
@@ -58,9 +58,11 @@ export function Tabs({ tabs, active, onChange, idPrefix = 'tab', className }: Ta
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(t.id)}
             className={cx(
-              'relative -mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium',
+              'whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium',
               'transition-colors duration-100',
-              selected ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg',
+              selected
+                ? 'border-accent bg-surface text-fg'
+                : 'border-transparent text-muted hover:bg-surface hover:text-fg',
             )}
           >
             {t.label}

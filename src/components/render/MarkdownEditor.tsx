@@ -93,7 +93,7 @@ export function MarkdownEditor({ value, label, onSave, onCancel }: Props) {
           spellCheck={false}
           aria-label={label}
           rows={18}
-          className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-fg placeholder:text-muted focus-visible:border-accent"
+          className="sf-field resize-y px-3 py-2 text-sm leading-relaxed placeholder:text-muted focus-visible:border-accent"
         />
       ) : (
         <RenderBoundary label={label}>

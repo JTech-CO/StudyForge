@@ -14,6 +14,7 @@
   --color-border: var(--border);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-overlay: var(--overlay);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-success: var(--success);
@@ -54,6 +55,18 @@
     text-rendering: optimizeLegibility;
   }
 
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--accent) 22%, transparent);
   }
@@ -63,6 +76,81 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 3px;
+  }
+}
+
+@layer components {
+  .sf-sidebar {
+    max-height: calc(100dvh - 4rem);
+  }
+
+  .sf-drawer-panel {
+    max-width: 80%;
+  }
+
+  .sf-modal-panel {
+    max-height: 90dvh;
+  }
+
+  .sf-page-head {
+    border-left: 4px solid var(--accent);
+    padding-left: 1.25rem;
+  }
+
+  .sf-kicker {
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .sf-step {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .sf-field {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--fg);
+    transition:
+      border-color 100ms ease,
+      background-color 100ms ease;
+  }
+
+  .sf-field:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--muted) 55%, var(--border));
+  }
+
+  .sf-output-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .sf-output-panel {
+      padding: 1.5rem;
+    }
   }
 }
 

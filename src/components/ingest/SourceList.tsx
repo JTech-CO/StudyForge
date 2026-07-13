@@ -54,7 +54,7 @@ function SourceRow({ src }: { src: Source }) {
   const hasText = typeof src.text === 'string' && src.text.length > 0;
 
   return (
-    <li className="rounded-lg border border-border bg-surface px-3 py-2.5">
+    <li className="rounded-lg border border-border bg-bg px-3 py-2.5">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 shrink-0 rounded border border-border px-1.5 py-0.5 text-xs font-medium text-muted">
           {kindLabel(src.kind, t)}
@@ -88,7 +88,7 @@ function SourceRow({ src }: { src: Source }) {
                 {open ? t('sourceList.previewClose') : t('sourceList.previewOpen')}
               </button>
               {open && (
-                <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded border border-border bg-bg p-2 text-xs text-fg">
+                <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded border border-border bg-surface-2 p-2 text-xs text-fg">
                   {src.text!.slice(0, 600)}
                   {src.text!.length > 600 ? '…' : ''}
                 </pre>

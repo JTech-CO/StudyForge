@@ -19,7 +19,7 @@ import { useT } from '../hooks/useT';
 
 // 설정 다이얼로그(App.tsx)와 동일한 라디오 패턴의 세로 변형(라벨 + 설명).
 const RADIO_SPAN_COL =
-  'flex flex-col items-start rounded-lg border border-border px-3 py-2 text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent';
+  'flex flex-col items-start rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted transition-colors duration-100 hover:bg-surface-2 peer-checked:border-accent peer-checked:bg-accent/10 peer-checked:text-fg peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent';
 
 /** 공유 다이얼로그 — 읽기 전용/편집 가능 선택 후 링크 생성·복사. */
 function ShareDialog({
@@ -191,7 +191,7 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
   }
 
   return (
-    <div className="mb-6">
+    <div className="sf-page-head mb-6">
       <p className="text-sm text-muted">{t('notebook.label')}</p>
 
       {editingTitle ? (
@@ -212,7 +212,7 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
               }
             }}
             aria-label={t('notebook.renamePlaceholder')}
-            className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-2xl font-bold tracking-tight text-fg focus-visible:border-accent"
+            className="sf-field min-w-0 flex-1 px-3 py-2 text-2xl font-bold tracking-tight focus-visible:border-accent"
           />
           <Button size="sm" variant="primary" type="button" onClick={() => void commitEdit()} loading={savingTitle}>
             {t('common.save')}
@@ -223,7 +223,7 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
         </div>
       ) : (
         <div className="mt-1 flex items-start gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-fg">{notebook.title}</h1>
+          <h1 className="break-words text-3xl font-bold tracking-tight text-fg">{notebook.title}</h1>
           <button
             type="button"
             onClick={startEdit}
@@ -236,7 +236,7 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <span className="text-sm text-muted">{t('notebook.sourceCount', { n: notebook.sources.length })}</span>
         <Button size="sm" variant="ghost" type="button" onClick={copyAll}>
           {copiedAll ? t('common.copied') : t('common.copyAllMd')}
@@ -258,7 +258,7 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
       </div>
 
       {mutationError && (
-        <p className="mt-3 text-sm text-error" role="alert">
+        <p className="mt-3 border-l-2 border-error pl-3 text-sm text-error" role="alert">
           {mutationError}
         </p>
       )}
@@ -298,7 +298,7 @@ function OwnerNotebook({ id }: { id: string }) {
   if (!notebook || notebook.id !== id) {
     if (loadFailed) {
       return (
-        <Container width="wide" className="py-8">
+        <Container width="wide" className="py-8 sm:py-12">
           <h1 className="text-2xl font-bold text-fg">{t('notebook.loadFailed')}</h1>
           <p className="mt-2 text-sm text-muted">{t('notebook.loadFailedDesc')}</p>
           <p className="mt-4">
@@ -312,13 +312,13 @@ function OwnerNotebook({ id }: { id: string }) {
 
     if (!notFound) {
       return (
-        <Container width="wide" className="py-8">
+        <Container width="wide" className="py-8 sm:py-12">
           <p className="text-sm text-muted">{t('common.loading')}</p>
         </Container>
       );
     }
     return (
-      <Container width="wide" className="py-8">
+      <Container width="wide" className="py-8 sm:py-12">
         <h1 className="text-2xl font-bold text-fg">{t('notebook.notFound')}</h1>
         <p className="mt-2 text-sm text-muted">{t('notebook.notFoundDesc')}</p>
         <p className="mt-4">
@@ -332,14 +332,16 @@ function OwnerNotebook({ id }: { id: string }) {
 
   const artifacts = notebook.artifacts;
   return (
-    <Container width="wide" className="py-8">
+    <Container width="wide" className="py-8 sm:py-12">
       <NotebookHeader notebook={notebook} />
-      <ArtifactTabs
-        artifacts={artifacts}
-        editable
-        onEditNotes={(notes) => updateNotebookArtifacts(id, { notes })}
-        onEditMindmap={(mindmapMd) => updateNotebookArtifacts(id, { mindmapMd })}
-      />
+      <div className="sf-output-panel">
+        <ArtifactTabs
+          artifacts={artifacts}
+          editable
+          onEditNotes={(notes) => updateNotebookArtifacts(id, { notes })}
+          onEditMindmap={(mindmapMd) => updateNotebookArtifacts(id, { mindmapMd })}
+        />
+      </div>
       <p className="mt-8">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2">
           {t('common.backHome')} <ArrowRight size={14} />
@@ -405,7 +407,7 @@ function RemoteNotebook({ code }: { code: string }) {
   }
 
   return (
-    <Container width="wide" className="py-8">
+    <Container width="wide" className="py-8 sm:py-12">
       {loading ? (
         <p className="text-sm text-muted">{t('common.loading')}</p>
       ) : error ? (
@@ -420,13 +422,13 @@ function RemoteNotebook({ code }: { code: string }) {
         </div>
       ) : data ? (
         <div>
-          <div className="mb-6">
+          <div className="sf-page-head mb-6">
             <p className="text-sm text-muted">
               {data.mode === 'editable' ? t('share.modeEditable') : t('share.readonlyNote')}
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-fg">{data.title}</h1>
+            <h1 className="break-words text-3xl font-bold tracking-tight text-fg">{data.title}</h1>
             {data.mode === 'editable' && (
-              <div className="mt-3 rounded-lg border border-border bg-surface px-4 py-3">
+              <div className="mt-3 rounded-lg border border-border border-l-2 border-l-accent bg-surface px-4 py-3">
                 <p className="text-sm text-muted">{t('share.editableBanner')}</p>
                 <div className="mt-3">
                   <Button size="sm" variant="primary" type="button" onClick={saveToLibrary} loading={importing}>
@@ -441,7 +443,9 @@ function RemoteNotebook({ code }: { code: string }) {
               </div>
             )}
           </div>
-          <ArtifactTabs artifacts={data.artifacts} />
+          <div className="sf-output-panel">
+            <ArtifactTabs artifacts={data.artifacts} />
+          </div>
           <p className="mt-8">
             <Link to="/" className="inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2">
               {t('common.backHome')} <ArrowRight size={14} />

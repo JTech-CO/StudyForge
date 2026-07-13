@@ -39,18 +39,17 @@ export function Drawer({ open, onClose }: DrawerProps) {
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-40 md:hidden">
-      <div className="absolute inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+    <div className="fixed inset-0 z-40 lg:hidden">
+      <div className="absolute inset-0 bg-overlay" aria-hidden="true" onClick={onClose} />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={t('drawer.menu')}
         tabIndex={-1}
-        style={{ maxWidth: '80%' }}
-        className="absolute inset-y-0 left-0 w-72 overflow-y-auto border-r border-border bg-bg outline-none"
+        className="sf-drawer-panel absolute inset-y-0 left-0 w-72 overflow-y-auto border-r border-border bg-surface outline-none"
       >
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+        <div className="flex h-16 items-center justify-between border-b border-border px-4">
           <span className="font-semibold text-fg">{t('drawer.menu')}</span>
           <button
             type="button"
