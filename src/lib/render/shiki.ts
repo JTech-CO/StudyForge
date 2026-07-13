@@ -1,30 +1,34 @@
-// fine-grained + JS 정규식 엔진(wasm 불필요 → dev/prod 모두 안정, 번들도 최소).
-import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
+import { createBundledHighlighter } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-import githubLight from '@shikijs/themes/github-light';
-import githubDark from '@shikijs/themes/github-dark';
-import javascript from '@shikijs/langs/javascript';
-import typescript from '@shikijs/langs/typescript';
-import jsx from '@shikijs/langs/jsx';
-import tsx from '@shikijs/langs/tsx';
-import python from '@shikijs/langs/python';
-import java from '@shikijs/langs/java';
-import c from '@shikijs/langs/c';
-import cpp from '@shikijs/langs/cpp';
-import csharp from '@shikijs/langs/csharp';
-import go from '@shikijs/langs/go';
-import rust from '@shikijs/langs/rust';
-import ruby from '@shikijs/langs/ruby';
-import php from '@shikijs/langs/php';
-import sql from '@shikijs/langs/sql';
-import bash from '@shikijs/langs/bash';
-import json from '@shikijs/langs/json';
-import yaml from '@shikijs/langs/yaml';
-import htmlLang from '@shikijs/langs/html';
-import cssLang from '@shikijs/langs/css';
-import markdown from '@shikijs/langs/markdown';
 
-const THEMES = { light: 'github-light', dark: 'github-dark' } as const;
+const LANGUAGES = {
+  javascript: () => import('@shikijs/langs/javascript'),
+  typescript: () => import('@shikijs/langs/typescript'),
+  jsx: () => import('@shikijs/langs/jsx'),
+  tsx: () => import('@shikijs/langs/tsx'),
+  python: () => import('@shikijs/langs/python'),
+  java: () => import('@shikijs/langs/java'),
+  c: () => import('@shikijs/langs/c'),
+  cpp: () => import('@shikijs/langs/cpp'),
+  csharp: () => import('@shikijs/langs/csharp'),
+  go: () => import('@shikijs/langs/go'),
+  rust: () => import('@shikijs/langs/rust'),
+  ruby: () => import('@shikijs/langs/ruby'),
+  php: () => import('@shikijs/langs/php'),
+  sql: () => import('@shikijs/langs/sql'),
+  bash: () => import('@shikijs/langs/bash'),
+  json: () => import('@shikijs/langs/json'),
+  yaml: () => import('@shikijs/langs/yaml'),
+  html: () => import('@shikijs/langs/html'),
+  css: () => import('@shikijs/langs/css'),
+  markdown: () => import('@shikijs/langs/markdown'),
+} as const;
+
+const THEMES = {
+  'github-light': () => import('@shikijs/themes/github-light'),
+  'github-dark': () => import('@shikijs/themes/github-dark'),
+} as const;
+const THEME_NAMES = { light: 'github-light', dark: 'github-dark' } as const;
 
 const ALIAS: Record<string, string> = {
   js: 'javascript', mjs: 'javascript', cjs: 'javascript', node: 'javascript',
@@ -33,26 +37,49 @@ const ALIAS: Record<string, string> = {
   sh: 'bash', shell: 'bash', zsh: 'bash', console: 'bash', yml: 'yaml',
 };
 
-let highlighterPromise: Promise<HighlighterCore> | null = null;
+type SupportedLanguage = keyof typeof LANGUAGES;
 
-function getHighlighter(): Promise<HighlighterCore> {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighterCore({
-      themes: [githubLight, githubDark],
-      langs: [
-        javascript, typescript, jsx, tsx, python, java, c, cpp, csharp, go,
-        rust, ruby, php, sql, bash, json, yaml, htmlLang, cssLang, markdown,
-      ],
-      engine: createJavaScriptRegexEngine({ forgiving: true }),
-    });
-  }
+function isSupportedLanguage(lang: string): lang is SupportedLanguage {
+  return Object.hasOwn(LANGUAGES, lang);
+}
+
+const createHighlighter = createBundledHighlighter({
+  langs: LANGUAGES,
+  themes: THEMES,
+  engine: () => createJavaScriptRegexEngine({ forgiving: true }),
+});
+
+let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
+const languageLoads = new Map<SupportedLanguage, Promise<void>>();
+
+function getHighlighter(): ReturnType<typeof createHighlighter> {
+  highlighterPromise ??= createHighlighter({
+    themes: ['github-light', 'github-dark'],
+    langs: [],
+  });
   return highlighterPromise;
 }
 
-/** 코드 → 듀얼 테마 HTML(라이트/다크 CSS 변수). 미지원 언어는 plaintext 로 폴백. */
+async function ensureLanguage(
+  highlighter: Awaited<ReturnType<typeof createHighlighter>>,
+  lang: SupportedLanguage,
+): Promise<void> {
+  if (highlighter.getLoadedLanguages().includes(lang)) return;
+  let pending = languageLoads.get(lang);
+  if (!pending) {
+    pending = highlighter.loadLanguage(lang).finally(() => languageLoads.delete(lang));
+    languageLoads.set(lang, pending);
+  }
+  await pending;
+}
+
+/** Converts code to dual-theme HTML. Unsupported languages fall back to plaintext. */
 export async function highlightCode(code: string, lang: string): Promise<string> {
-  const hl = await getHighlighter();
-  const normalized = ALIAS[lang] ?? lang;
-  const useLang = hl.getLoadedLanguages().includes(normalized) ? normalized : 'text';
-  return hl.codeToHtml(code, { lang: useLang, themes: THEMES, defaultColor: false });
+  const highlighter = await getHighlighter();
+  const normalized = ALIAS[lang.toLowerCase()] ?? lang.toLowerCase();
+  if (!isSupportedLanguage(normalized)) {
+    return highlighter.codeToHtml(code, { lang: 'text', themes: THEME_NAMES, defaultColor: false });
+  }
+  await ensureLanguage(highlighter, normalized);
+  return highlighter.codeToHtml(code, { lang: normalized, themes: THEME_NAMES, defaultColor: false });
 }

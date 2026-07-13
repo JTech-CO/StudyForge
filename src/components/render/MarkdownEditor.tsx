@@ -10,7 +10,7 @@ const MarkdownView = lazy(() => import('./MarkdownView').then((m) => ({ default:
 interface Props {
   value: string;
   label: string;
-  onSave: (next: string) => void;
+  onSave: (next: string) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -20,17 +20,33 @@ export function MarkdownEditor({ value, label, onSave, onCancel }: Props) {
   const { t } = useT();
   const [draft, setDraft] = useState(value);
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 편집 대상(value)이 바뀌면 초안·모드 재시드.
   useEffect(() => {
     setDraft(value);
     setMode('edit');
+    setSaving(false);
+    setError(null);
   }, [value]);
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(draft);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('common.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div
       onKeyDown={(e) => {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && !saving) {
           e.stopPropagation();
           onCancel();
         }
@@ -42,6 +58,7 @@ export function MarkdownEditor({ value, label, onSave, onCancel }: Props) {
             <button
               key={m}
               type="button"
+              disabled={saving}
               onClick={() => setMode(m)}
               aria-pressed={mode === m}
               className={cx(
@@ -54,19 +71,25 @@ export function MarkdownEditor({ value, label, onSave, onCancel }: Props) {
           ))}
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" type="button" onClick={onCancel}>
+          <Button size="sm" variant="ghost" type="button" onClick={onCancel} disabled={saving}>
             {t('common.cancel')}
           </Button>
-          <Button size="sm" variant="primary" type="button" onClick={() => onSave(draft)}>
+          <Button size="sm" variant="primary" type="button" onClick={() => void save()} loading={saving}>
             {t('common.save')}
           </Button>
         </div>
       </div>
+      {error && (
+        <p className="mb-3 text-sm text-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {mode === 'edit' ? (
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          disabled={saving}
           spellCheck={false}
           aria-label={label}
           rows={18}

@@ -57,12 +57,13 @@ interface StoreState {
   notebooks: NotebookSummary[];
   isGenerating: boolean;
   genError?: string;
+  storageError?: string;
   generate: () => Promise<string | undefined>;
   loadNotebooks: () => Promise<void>;
   openNotebook: (id: string) => Promise<Notebook | null>;
   removeNotebook: (id: string) => Promise<void>;
   renameNotebook: (id: string, title: string) => Promise<void>;
-  updateNotebookArtifacts: (id: string, artifacts: GeneratedArtifacts) => Promise<void>;
+  updateNotebookArtifacts: (id: string, patch: Pick<GeneratedArtifacts, 'notes' | 'mindmapMd'>) => Promise<void>;
   importSharedNotebook: (shared: SharedNotebook) => Promise<string>;
   addText: (text: string, title?: string) => void;
   addYoutube: (url: string) => void;
@@ -84,6 +85,19 @@ const DEFAULT_SETTINGS: Settings = {
   toggles: { notes: true, mindmap: true, quiz: true, flashcards: true, podcast: false },
 };
 
+const ingestControllers = new Map<string, AbortController>();
+let notebookLoadVersion = 0;
+const notebookWriteQueues = new Map<string, Promise<void>>();
+
+function enqueueNotebookWrite(id: string, task: () => Promise<void>): Promise<void> {
+  const previous = notebookWriteQueues.get(id) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(task);
+  notebookWriteQueues.set(id, next);
+  return next.finally(() => {
+    if (notebookWriteQueues.get(id) === next) notebookWriteQueues.delete(id);
+  });
+}
+
 export const useStore = create<StoreState>()(
   persist(
     immer((set, get) => ({
@@ -93,6 +107,7 @@ export const useStore = create<StoreState>()(
       notebooks: [],
       isGenerating: false,
       genError: undefined,
+      storageError: undefined,
 
       generate: async () => {
         const { sources, settings } = get();
@@ -212,6 +227,8 @@ export const useStore = create<StoreState>()(
         await Promise.all(
           files.map(async (file) => {
             const id = newId();
+            const controller = new AbortController();
+            ingestControllers.set(id, controller);
             const kind = detectKind(file) ?? 'txt';
             set((s) => {
               s.sources.push({
@@ -223,7 +240,7 @@ export const useStore = create<StoreState>()(
               });
             });
             try {
-              const { context, warning } = await ingestFile(file, { apiKey });
+              const { context, warning } = await ingestFile(file, { apiKey, signal: controller.signal });
               set((s) => {
                 const i = s.sources.findIndex((x) => x.id === id);
                 if (i >= 0) s.sources[i] = { ...context, id, status: 'ready', warning };
@@ -237,34 +254,47 @@ export const useStore = create<StoreState>()(
                   s.sources[i].error = msg;
                 }
               });
+            } finally {
+              if (ingestControllers.get(id) === controller) ingestControllers.delete(id);
             }
           }),
         );
       },
 
-      removeSource: (id) =>
+      removeSource: (id) => {
+        ingestControllers.get(id)?.abort();
+        ingestControllers.delete(id);
         set((s) => {
           s.sources = s.sources.filter((x) => x.id !== id);
-        }),
-      clearSources: () =>
+        });
+      },
+      clearSources: () => {
+        for (const controller of ingestControllers.values()) controller.abort();
+        ingestControllers.clear();
         set((s) => {
           s.sources = [];
-        }),
+        });
+      },
 
       loadNotebooks: async () => {
         try {
           const list = await listNotebooks();
           set((s) => {
             s.notebooks = list;
+            s.storageError = undefined;
           });
         } catch {
-          /* IndexedDB 사용 불가 시 목록 비움(앱은 계속 동작) */
+          const locale = get().settings.locale;
+          set((s) => {
+            s.storageError = translate(locale, 'storage.loadFailed');
+          });
         }
       },
       openNotebook: async (id) => {
+        const version = ++notebookLoadVersion;
         if (get().notebook?.id === id) return get().notebook;
         const nb = (await getNotebook(id)) ?? null;
-        if (nb) {
+        if (nb && version === notebookLoadVersion) {
           set((s) => {
             s.notebook = nb;
           });
@@ -272,34 +302,48 @@ export const useStore = create<StoreState>()(
         return nb;
       },
       removeNotebook: async (id) => {
-        await deleteNotebook(id);
-        set((s) => {
-          s.notebooks = s.notebooks.filter((n) => n.id !== id);
-          if (s.notebook?.id === id) s.notebook = null;
+        ++notebookLoadVersion;
+        await enqueueNotebookWrite(id, async () => {
+          await deleteNotebook(id);
+          set((s) => {
+            s.notebooks = s.notebooks.filter((n) => n.id !== id);
+            if (s.notebook?.id === id) s.notebook = null;
+          });
         });
       },
 
       // 제목 변경 — 열린 노트북 대상. 평문 객체로 IDB 저장 후 인메모리 갱신(save-before-set).
       renameNotebook: async (id, title) => {
-        const current = get().notebook;
-        if (!current || current.id !== id) return;
-        const next: Notebook = { ...current, title };
-        await saveNotebook(next);
-        set((s) => {
-          if (s.notebook?.id === id) s.notebook.title = title;
-          const i = s.notebooks.findIndex((n) => n.id === id);
-          if (i >= 0) s.notebooks[i].title = title;
+        await enqueueNotebookWrite(id, async () => {
+          const open = get().notebook;
+          const current = open?.id === id ? open : await getNotebook(id);
+          if (!current || current.id !== id) {
+            throw new Error(translate(get().settings.locale, 'notebook.changedBeforeSave'));
+          }
+          const next: Notebook = { ...current, title };
+          await saveNotebook(next);
+          set((s) => {
+            if (s.notebook?.id === id) s.notebook.title = title;
+            const i = s.notebooks.findIndex((n) => n.id === id);
+            if (i >= 0) s.notebooks[i].title = title;
+          });
         });
       },
 
-      // 노트·마인드맵 편집 저장 — 산출물 전체 교체(범위 밖 필드는 호출부가 보존해 전달).
-      updateNotebookArtifacts: async (id, artifacts) => {
-        const current = get().notebook;
-        if (!current || current.id !== id) return;
-        const next: Notebook = { ...current, artifacts };
-        await saveNotebook(next);
-        set((s) => {
-          if (s.notebook?.id === id) s.notebook.artifacts = artifacts;
+      // 노트·마인드맵 편집 저장 — 큐 실행 시점의 최신 산출물에 변경 필드만 병합한다.
+      updateNotebookArtifacts: async (id, patch) => {
+        await enqueueNotebookWrite(id, async () => {
+          const open = get().notebook;
+          const current = open?.id === id ? open : await getNotebook(id);
+          if (!current || current.id !== id) {
+            throw new Error(translate(get().settings.locale, 'notebook.changedBeforeSave'));
+          }
+          const artifacts: GeneratedArtifacts = { ...current.artifacts, ...patch };
+          const next: Notebook = { ...current, artifacts };
+          await saveNotebook(next);
+          set((s) => {
+            if (s.notebook?.id === id) s.notebook.artifacts = artifacts;
+          });
         });
       },
 

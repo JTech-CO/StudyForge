@@ -35,14 +35,29 @@ function ShareDialog({
   const [mode, setMode] = useState<ShareMode>('readonly');
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setMode('readonly');
+    setBusy(false);
+    setUrl(null);
+    setLinkCopied(false);
+    setErr(null);
+  }, [open, notebook.id]);
 
   async function create() {
     setBusy(true);
     setErr(null);
     try {
       const u = await createShareLink(notebook, mode);
-      await navigator.clipboard.writeText(u).catch(() => {});
+      try {
+        await navigator.clipboard.writeText(u);
+        setLinkCopied(true);
+      } catch {
+        setLinkCopied(false);
+      }
       setUrl(u);
     } catch (e) {
       setErr(e instanceof Error ? e.message : t('notebook.shareFailed'));
@@ -68,7 +83,11 @@ function ShareDialog({
                   type="radio"
                   name="share-mode"
                   checked={mode === m}
-                  onChange={() => setMode(m)}
+                  onChange={() => {
+                    setMode(m);
+                    setUrl(null);
+                    setErr(null);
+                  }}
                   className="peer sr-only"
                 />
                 <span className={RADIO_SPAN_COL}>
@@ -88,7 +107,7 @@ function ShareDialog({
 
         {url && (
           <p className="text-sm text-success">
-            {t('notebook.shareCopied')}{' '}
+            {linkCopied ? t('notebook.shareCopied') : t('share.linkCreated')}{' '}
             <a href={url} className="break-all underline underline-offset-2">
               {url}
             </a>
@@ -114,29 +133,61 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(notebook.title);
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   async function copyAll() {
+    setMutationError(null);
     try {
       await navigator.clipboard.writeText(notebookToMd(notebook.artifacts, notebook.title));
       setCopiedAll(true);
       setTimeout(() => setCopiedAll(false), 1500);
     } catch {
-      /* 무시 */
+      setMutationError(t('common.copyFailed'));
     }
   }
 
   function startEdit() {
     setDraftTitle(notebook.title);
+    setMutationError(null);
     setEditingTitle(true);
   }
   function cancelEdit() {
     setDraftTitle(notebook.title);
+    setMutationError(null);
     setEditingTitle(false);
   }
-  function commitEdit() {
+  async function commitEdit() {
     const v = draftTitle.trim();
-    if (v && v !== notebook.title) void renameNotebook(notebook.id, v);
-    setEditingTitle(false);
+    if (!v || v === notebook.title) {
+      setEditingTitle(false);
+      return;
+    }
+    setSavingTitle(true);
+    setMutationError(null);
+    try {
+      await renameNotebook(notebook.id, v);
+      setEditingTitle(false);
+    } catch (e) {
+      setMutationError(e instanceof Error ? e.message : t('notebook.renameFailed'));
+    } finally {
+      setSavingTitle(false);
+    }
+  }
+
+  async function deleteCurrent() {
+    if (!window.confirm(t('notebook.deleteConfirm'))) return;
+    setDeleting(true);
+    setMutationError(null);
+    try {
+      await removeNotebook(notebook.id);
+      navigate('/');
+    } catch (e) {
+      setMutationError(e instanceof Error ? e.message : t('notebook.deleteFailed'));
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -150,10 +201,11 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
             autoFocus
             value={draftTitle}
             onChange={(e) => setDraftTitle(e.target.value)}
+            disabled={savingTitle}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                commitEdit();
+                void commitEdit();
               } else if (e.key === 'Escape') {
                 e.preventDefault();
                 cancelEdit();
@@ -162,10 +214,10 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
             aria-label={t('notebook.renamePlaceholder')}
             className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-2xl font-bold tracking-tight text-fg focus-visible:border-accent"
           />
-          <Button size="sm" variant="primary" type="button" onClick={commitEdit}>
+          <Button size="sm" variant="primary" type="button" onClick={() => void commitEdit()} loading={savingTitle}>
             {t('common.save')}
           </Button>
-          <Button size="sm" variant="ghost" type="button" onClick={cancelEdit}>
+          <Button size="sm" variant="ghost" type="button" onClick={cancelEdit} disabled={savingTitle}>
             {t('common.cancel')}
           </Button>
         </div>
@@ -198,15 +250,18 @@ function NotebookHeader({ notebook }: { notebook: NotebookType }) {
           size="sm"
           variant="danger"
           type="button"
-          onClick={() => {
-            void removeNotebook(notebook.id);
-            navigate('/');
-          }}
+          onClick={() => void deleteCurrent()}
+          loading={deleting}
         >
           {t('common.delete')}
         </Button>
       </div>
 
+      {mutationError && (
+        <p className="mt-3 text-sm text-error" role="alert">
+          {mutationError}
+        </p>
+      )}
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} notebook={notebook} />
     </div>
   );
@@ -220,21 +275,41 @@ function OwnerNotebook({ id }: { id: string }) {
   const updateNotebookArtifacts = useStore((s) => s.updateNotebookArtifacts);
   const isMatch = !!notebook && notebook.id === id;
   const [notFound, setNotFound] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // 로딩을 스토어 파생(isMatch)으로 판단 → StrictMode 이중호출에 강건(별도 불리언 X).
   useEffect(() => {
     if (isMatch) return;
     setNotFound(false);
+    setLoadFailed(false);
     let alive = true;
-    void openNotebook(id).then((nb) => {
-      if (alive && !nb) setNotFound(true);
-    });
+    void openNotebook(id)
+      .then((nb) => {
+        if (alive && !nb) setNotFound(true);
+      })
+      .catch(() => {
+        if (alive) setLoadFailed(true);
+      });
     return () => {
       alive = false;
     };
   }, [id, isMatch, openNotebook]);
 
   if (!notebook || notebook.id !== id) {
+    if (loadFailed) {
+      return (
+        <Container width="wide" className="py-8">
+          <h1 className="text-2xl font-bold text-fg">{t('notebook.loadFailed')}</h1>
+          <p className="mt-2 text-sm text-muted">{t('notebook.loadFailedDesc')}</p>
+          <p className="mt-4">
+            <Link to="/" className="inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2">
+              {t('common.home')} <ArrowRight size={14} />
+            </Link>
+          </p>
+        </Container>
+      );
+    }
+
     if (!notFound) {
       return (
         <Container width="wide" className="py-8">
@@ -262,8 +337,8 @@ function OwnerNotebook({ id }: { id: string }) {
       <ArtifactTabs
         artifacts={artifacts}
         editable
-        onEditNotes={(notes) => void updateNotebookArtifacts(id, { ...artifacts, notes })}
-        onEditMindmap={(mindmapMd) => void updateNotebookArtifacts(id, { ...artifacts, mindmapMd })}
+        onEditNotes={(notes) => updateNotebookArtifacts(id, { notes })}
+        onEditMindmap={(mindmapMd) => updateNotebookArtifacts(id, { mindmapMd })}
       />
       <p className="mt-8">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-accent underline underline-offset-2">
@@ -283,6 +358,7 @@ function RemoteNotebook({ code }: { code: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // deps 는 code 만(t 는 매 렌더 새 함수 → 넣으면 재fetch 루프). alive 로 StrictMode 이중호출·언마운트 후 setState 방지.
   useEffect(() => {
@@ -292,26 +368,24 @@ function RemoteNotebook({ code }: { code: string }) {
       return;
     }
     let alive = true;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
-    fetchShared(code)
+    fetchShared(code, controller.signal)
       .then((d) => {
         if (!alive) return;
-        // 네트워크 페이로드 방어: mode 기본 차단(readonly), errors 필수 필드 보강.
-        setData({
-          ...d,
-          mode: d.mode === 'editable' ? 'editable' : 'readonly',
-          artifacts: { ...d.artifacts, errors: d.artifacts?.errors ?? {} },
-        });
+        setData(d);
         setLoading(false);
       })
       .catch((e) => {
         if (!alive) return;
+        if (e instanceof DOMException && e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : t('share.loadFailed'));
         setLoading(false);
       });
     return () => {
       alive = false;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
@@ -319,10 +393,13 @@ function RemoteNotebook({ code }: { code: string }) {
   async function saveToLibrary() {
     if (!data) return;
     setImporting(true);
+    setImportError(null);
     try {
       const nid = await importSharedNotebook(data);
       navigate(`/notebook/${nid}`);
-    } catch {
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : t('share.importFailed'));
+    } finally {
       setImporting(false);
     }
   }
@@ -356,6 +433,11 @@ function RemoteNotebook({ code }: { code: string }) {
                     {importing ? t('share.saving') : t('share.saveToLibrary')}
                   </Button>
                 </div>
+                {importError && (
+                  <p className="mt-2 text-sm text-error" role="alert">
+                    {importError}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -375,5 +457,5 @@ function RemoteNotebook({ code }: { code: string }) {
 export default function Notebook() {
   const { id } = useParams();
   if (!id) return null;
-  return isShareCode(id) ? <RemoteNotebook code={id} /> : <OwnerNotebook id={id} />;
+  return isShareCode(id) ? <RemoteNotebook key={id} code={id} /> : <OwnerNotebook key={id} id={id} />;
 }

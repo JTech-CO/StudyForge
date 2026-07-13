@@ -37,6 +37,7 @@ function Placeholder({ text }: { text: string }) {
 function CopyButton({ text }: { text: string }) {
   const { t } = useT();
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   return (
     <Button
       size="sm"
@@ -44,15 +45,17 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={async () => {
         try {
+          setCopyFailed(false);
           await navigator.clipboard.writeText(text);
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         } catch {
-          /* 무시 */
+          setCopyFailed(true);
+          setTimeout(() => setCopyFailed(false), 1500);
         }
       }}
     >
-      {copied ? t('common.copied') : t('common.copyMd')}
+      {copyFailed ? t('common.copyFailed') : copied ? t('common.copied') : t('common.copyMd')}
     </Button>
   );
 }
@@ -93,8 +96,8 @@ export function ArtifactTabs({
 }: {
   artifacts: GeneratedArtifacts;
   editable?: boolean;
-  onEditNotes?: (next: NotesResult) => void;
-  onEditMindmap?: (next: string) => void;
+  onEditNotes?: (next: NotesResult) => Promise<void>;
+  onEditMindmap?: (next: string) => Promise<void>;
 }) {
   const { t } = useT();
   const tabDefs = TAB_DEFS.filter((d) => d.present(artifacts) || artifacts.errors[d.errorKey]);
@@ -103,6 +106,7 @@ export function ArtifactTabs({
   const [noteView, setNoteView] = useState<'summary' | 'detailed'>('detailed');
   const notesRef = useRef<HTMLDivElement>(null);
   const [pngBusy, setPngBusy] = useState(false);
+  const [pngFailed, setPngFailed] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [editingMindmap, setEditingMindmap] = useState(false);
   const canEditNotes = editable && !!onEditNotes;
@@ -117,12 +121,13 @@ export function ArtifactTabs({
   async function savePng() {
     if (!notesRef.current) return;
     setPngBusy(true);
+    setPngFailed(false);
     try {
       // html-to-image 는 클릭 시에만 로드 (메인 번들에서 분리)
       const { exportNodeToPng } = await import('../../lib/export/image');
       await exportNodeToPng(notesRef.current, 'studyforge-note.png');
     } catch {
-      /* 무시 */
+      setPngFailed(true);
     } finally {
       setPngBusy(false);
     }
@@ -137,7 +142,7 @@ export function ArtifactTabs({
       <Tabs tabs={tabs} active={activeId} onChange={setActive} className="mb-4" />
 
       {activeId === 'notes' && (
-        <section role="tabpanel" aria-labelledby="tab-notes">
+        <section id="tabpanel-notes" role="tabpanel" aria-labelledby="tab-notes">
           {artifacts.errors['노트'] ? (
             <Placeholder text={failed('노트', 'artifact.notes')} />
           ) : notes ? (
@@ -146,8 +151,8 @@ export function ArtifactTabs({
               <MarkdownEditor
                 value={noteMd}
                 label={t('artifact.notes')}
-                onSave={(next) => {
-                  onEditNotes?.(
+                onSave={async (next) => {
+                  await onEditNotes?.(
                     noteView === 'summary'
                       ? { summaryMd: next, detailedMd: notes.detailedMd }
                       : { summaryMd: notes.summaryMd, detailedMd: next },
@@ -183,7 +188,7 @@ export function ArtifactTabs({
                     )}
                     <CopyButton text={noteMd} />
                     <Button size="sm" variant="ghost" type="button" onClick={savePng} loading={pngBusy}>
-                      {t('common.savePng')}
+                      {pngFailed ? t('common.exportFailed') : t('common.savePng')}
                     </Button>
                   </div>
                 </div>
@@ -203,7 +208,7 @@ export function ArtifactTabs({
       )}
 
       {activeId === 'mindmap' && (
-        <section role="tabpanel" aria-labelledby="tab-mindmap">
+        <section id="tabpanel-mindmap" role="tabpanel" aria-labelledby="tab-mindmap">
           {artifacts.errors['마인드맵'] ? (
             <Placeholder text={failed('마인드맵', 'artifact.mindmap')} />
           ) : artifacts.mindmapMd ? (
@@ -211,8 +216,8 @@ export function ArtifactTabs({
               <MarkdownEditor
                 value={artifacts.mindmapMd}
                 label={t('artifact.mindmap')}
-                onSave={(next) => {
-                  onEditMindmap?.(next);
+                onSave={async (next) => {
+                  await onEditMindmap?.(next);
                   setEditingMindmap(false);
                 }}
                 onCancel={() => setEditingMindmap(false)}
@@ -241,7 +246,7 @@ export function ArtifactTabs({
       )}
 
       {activeId === 'quiz' && (
-        <section role="tabpanel" aria-labelledby="tab-quiz">
+        <section id="tabpanel-quiz" role="tabpanel" aria-labelledby="tab-quiz">
           {artifacts.errors['퀴즈'] ? (
             <Placeholder text={failed('퀴즈', 'artifact.quiz')} />
           ) : artifacts.quiz && artifacts.quiz.length > 0 ? (
@@ -260,7 +265,7 @@ export function ArtifactTabs({
       )}
 
       {activeId === 'flashcards' && (
-        <section role="tabpanel" aria-labelledby="tab-flashcards">
+        <section id="tabpanel-flashcards" role="tabpanel" aria-labelledby="tab-flashcards">
           {artifacts.errors['플래시카드'] ? (
             <Placeholder text={failed('플래시카드', 'artifact.flashcards')} />
           ) : artifacts.flashcards && artifacts.flashcards.length > 0 ? (
@@ -279,7 +284,7 @@ export function ArtifactTabs({
       )}
 
       {activeId === 'podcast' && (
-        <section role="tabpanel" aria-labelledby="tab-podcast">
+        <section id="tabpanel-podcast" role="tabpanel" aria-labelledby="tab-podcast">
           {artifacts.errors['팟캐스트'] ? (
             <Placeholder text={failed('팟캐스트', 'artifact.podcast')} />
           ) : artifacts.podcast && artifacts.podcast.turns.length > 0 ? (

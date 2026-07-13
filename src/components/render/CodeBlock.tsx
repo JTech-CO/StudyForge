@@ -7,6 +7,7 @@ export function CodeBlock({ lang, code }: { lang: string; code: string }) {
   const { t } = useT();
   const [html, setHtml] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -24,11 +25,13 @@ export function CodeBlock({ lang, code }: { lang: string; code: string }) {
 
   async function copy() {
     try {
+      setCopyFailed(false);
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* 클립보드 접근 불가 시 무시 */
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 1500);
     }
   }
 
@@ -37,7 +40,7 @@ export function CodeBlock({ lang, code }: { lang: string; code: string }) {
       <div className="sf-code__bar">
         <span className="sf-code__lang">{lang}</span>
         <button type="button" onClick={copy} className="sf-code__copy" aria-label={t('code.copyAria')}>
-          {copied ? t('common.copied') : t('code.copy')}
+          {copyFailed ? t('common.copyFailed') : copied ? t('common.copied') : t('code.copy')}
         </button>
       </div>
       {html ? (

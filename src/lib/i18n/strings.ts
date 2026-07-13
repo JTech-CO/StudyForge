@@ -19,6 +19,10 @@ const ko: Record<string, string> = {
   'common.cancel': '취소',
   'common.edit': '편집',
   'common.preview': '미리보기',
+  'common.saveFailed': '변경 내용을 저장하지 못했습니다.',
+  'storage.loadFailed': '저장된 노트북 목록을 불러오지 못했습니다. 브라우저 저장소 권한과 여유 공간을 확인하세요.',
+  'common.copyFailed': '복사하지 못했습니다.',
+  'common.exportFailed': '내보내지 못했습니다.',
 
   // 헤더 / 테마 / 언어
   'header.menuOpen': '메뉴 열기',
@@ -115,12 +119,18 @@ const ko: Record<string, string> = {
   'notebook.notFound': '노트북을 찾을 수 없습니다',
   'notebook.notFoundDesc':
     '저장된 노트북이 없습니다(삭제되었거나 다른 브라우저). 홈에서 자료를 추가하고 생성해 주세요.',
+  'notebook.loadFailed': '노트북을 불러오지 못했습니다',
+  'notebook.loadFailedDesc': '브라우저 저장소에 접근할 수 없습니다. 저장소 권한과 여유 공간을 확인하세요.',
   'notebook.sourceCount': '자료 {n}개',
   'notebook.shareLink': '공유',
   'notebook.shareCopied': '공유 링크가 클립보드에 복사됐습니다:',
   'notebook.rename': '제목 변경',
   'notebook.renamePlaceholder': '노트북 제목',
   'notebook.imported': '내 보관함에 저장했습니다. 사본을 편집할 수 있어요.',
+  'notebook.renameFailed': '노트북 제목을 저장하지 못했습니다.',
+  'notebook.deleteConfirm': '이 노트북을 삭제할까요? 삭제 후 복구할 수 없습니다.',
+  'notebook.deleteFailed': '노트북을 삭제하지 못했습니다.',
+  'notebook.changedBeforeSave': '노트북이 변경되어 저장할 수 없습니다. 다시 열고 시도하세요.',
 
   // 탭 / 산출물 뷰
   'tabs.summary': '요약',
@@ -180,9 +190,11 @@ const ko: Record<string, string> = {
   'share.modeEditableDesc': '받는 사람이 내 보관함에 사본을 저장해 편집할 수 있습니다.',
   'share.create': '링크 생성·복사',
   'share.creating': '링크 생성 중…',
+  'share.linkCreated': '공유 링크가 생성됐습니다:',
   'share.editableBanner': '편집 가능으로 공유된 노트입니다. 내 보관함에 저장하면 사본을 자유롭게 편집할 수 있어요.',
   'share.saveToLibrary': '내 보관함에 저장 후 편집',
   'share.saving': '저장 중…',
+  'share.importFailed': '공유 노트 사본을 저장하지 못했습니다.',
 
   // 렌더 경계
   'render.staleTitle': '앱이 업데이트되어 새로고침이 필요합니다.',
@@ -210,6 +222,10 @@ const en: Record<string, string> = {
   'common.delete': 'Delete',
   'common.copyMd': 'Copy MD',
   'common.copied': 'Copied',
+  'common.saveFailed': 'Failed to save your changes.',
+  'storage.loadFailed': 'Failed to load saved notebooks. Check browser storage permissions and free space.',
+  'common.copyFailed': 'Copy failed.',
+  'common.exportFailed': 'Export failed.',
   'common.copyAllMd': 'Copy all MD',
   'common.savePng': 'Save PNG',
   'common.home': 'Home',
@@ -305,12 +321,18 @@ const en: Record<string, string> = {
 
   'notebook.label': 'Notebook',
   'notebook.notFound': 'Notebook not found',
+  'notebook.loadFailed': 'Could not load notebook',
+  'notebook.loadFailedDesc': 'The browser storage is unavailable. Check storage permissions and free space.',
   'notebook.notFoundDesc':
     'No saved notebook (deleted, or a different browser). Add material and generate from home.',
   'notebook.sourceCount': '{n} source(s)',
   'notebook.shareLink': 'Share',
   'notebook.shareCopied': 'Share link copied to clipboard:',
   'notebook.rename': 'Rename',
+  'notebook.renameFailed': 'Failed to save the notebook title.',
+  'notebook.deleteConfirm': 'Delete this notebook? This cannot be undone.',
+  'notebook.deleteFailed': 'Failed to delete the notebook.',
+  'notebook.changedBeforeSave': 'The notebook changed before it could be saved. Reopen it and try again.',
   'notebook.renamePlaceholder': 'Notebook title',
   'notebook.imported': 'Saved to your library. You can edit your copy.',
 
@@ -367,9 +389,11 @@ const en: Record<string, string> = {
   'share.modeEditableDesc': 'Recipients can save a copy to their library and edit it.',
   'share.create': 'Create & copy link',
   'share.creating': 'Creating link…',
+  'share.linkCreated': 'Share link created:',
   'share.editableBanner': 'This note was shared as editable. Save it to your library to freely edit your own copy.',
   'share.saveToLibrary': 'Save to my library & edit',
   'share.saving': 'Saving…',
+  'share.importFailed': 'Failed to save a copy of the shared notebook.',
 
   'render.staleTitle': 'The app updated — a refresh is needed.',
   'render.staleDesc': 'Modules changed due to a dev-server restart or a new deployment.',

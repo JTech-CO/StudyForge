@@ -25,7 +25,7 @@ function isCorrect(item: QuizItem, given: string): boolean {
   if (item.type === 'short') {
     const a = normalize(item.answer);
     const g = normalize(given);
-    return g === a || a.includes(g) || g.includes(a);
+    return g === a;
   }
   return normalize(given) === normalize(item.answer);
 }

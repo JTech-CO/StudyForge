@@ -13,9 +13,10 @@ import { useStore } from '../lib/store';
 import { useT } from '../hooks/useT';
 
 export default function Home() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const sources = useStore((s) => s.sources);
   const notebooks = useStore((s) => s.notebooks);
+  const storageError = useStore((s) => s.storageError);
   const addText = useStore((s) => s.addText);
   const generate = useStore((s) => s.generate);
   const isGenerating = useStore((s) => s.isGenerating);
@@ -113,7 +114,12 @@ export default function Home() {
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-fg">{t('home.myNotebooks')}</h2>
-        {notebooks.length === 0 ? (
+        {storageError && (
+          <p className="mt-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-error" role="alert">
+            {storageError}
+          </p>
+        )}
+        {storageError ? null : notebooks.length === 0 ? (
           <div className="mt-3 rounded-lg border border-dashed border-border px-4 py-10 text-center">
             <p className="text-sm text-muted">{t('home.notebooksEmpty')}</p>
           </div>
@@ -127,7 +133,7 @@ export default function Home() {
                 >
                   <p className="truncate font-medium text-fg">{n.title}</p>
                   <p className="mt-0.5 text-xs text-muted">
-                    {new Date(n.createdAt).toLocaleDateString('ko-KR', {
+                    {new Date(n.createdAt).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

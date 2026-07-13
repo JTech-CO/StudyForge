@@ -15,7 +15,10 @@ export function MindMap({ markdown }: { markdown: string }) {
     void (async () => {
       const [lib, view] = await Promise.all([import('markmap-lib'), import('markmap-view')]);
       if (!alive || !svgRef.current) return;
-      const { root } = new lib.Transformer().transform(markdown);
+      const transformer = new lib.Transformer();
+      // markmap-view inserts node content as HTML, so raw HTML must stay disabled.
+      transformer.md.set({ html: false });
+      const { root } = transformer.transform(markdown);
       mmRef.current?.destroy?.();
       svgRef.current.replaceChildren();
       const accent =

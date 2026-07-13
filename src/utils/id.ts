@@ -8,8 +8,8 @@ export function newId(): string {
   return `id-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
 
-/** 공유 코드(Worker 발급 8자 영숫자) 판별. 로컬 id(UUID·하이픈 / `id-…` 폴백)와
- *  형태가 겹치지 않아 라우트의 로컬/원격 분기를 무충돌로 결정한다. */
+/** Recognizes current 8-character and legacy 10-character share codes.
+ * Local notebook IDs cannot collide with this route shape. */
 export function isShareCode(id: string): boolean {
-  return /^[a-hjkmnp-z2-9]{8}$/.test(id);
+  return /^(?:[a-hjkmnp-z2-9]{8}|[a-hjkmnp-z2-9]{10})$/.test(id);
 }
