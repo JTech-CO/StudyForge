@@ -4,7 +4,14 @@ import { immer } from 'zustand/middleware/immer';
 import type { Depth, Locale, SourceContext } from '../ai/provider';
 import { ingestFile, ingestText, ingestYoutube } from '../ingest';
 import type { GeneratedArtifacts } from '../ai/orchestrator';
-import { DEFAULT_MODEL } from '../ai/models';
+import {
+  DEFAULT_PROVIDER,
+  DEFAULT_PROVIDER_CONFIGS,
+  isProviderId,
+  providerDefinition,
+  type AIProviderId,
+  type ProviderConfigs,
+} from '../ai/models';
 import {
   deleteNotebook,
   getNotebook,
@@ -28,8 +35,8 @@ export interface Source extends SourceContext {
 }
 
 export interface Settings {
-  apiKey: string;
-  model: string;
+  provider: AIProviderId;
+  providers: ProviderConfigs;
   depth: Depth;
   locale: Locale;
   toggles: Record<ArtifactKind, boolean>;
@@ -70,20 +77,76 @@ interface StoreState {
   addFiles: (files: File[]) => Promise<void>;
   removeSource: (id: string) => void;
   clearSources: () => void;
-  setApiKey: (key: string) => void;
-  setModel: (model: string) => void;
+  setProvider: (provider: AIProviderId) => void;
+  setProviderApiKey: (provider: AIProviderId, key: string) => void;
+  setProviderModel: (provider: AIProviderId, model: string) => void;
+  setProviderBaseUrl: (provider: AIProviderId, baseUrl: string) => void;
   setDepth: (depth: Depth) => void;
   setLocale: (locale: Locale) => void;
   toggleArtifact: (kind: ArtifactKind) => void;
 }
 
+function defaultProviderConfigs(): ProviderConfigs {
+  return {
+    gemini: { ...DEFAULT_PROVIDER_CONFIGS.gemini },
+    openai: { ...DEFAULT_PROVIDER_CONFIGS.openai },
+    anthropic: { ...DEFAULT_PROVIDER_CONFIGS.anthropic },
+    xai: { ...DEFAULT_PROVIDER_CONFIGS.xai },
+    local: { ...DEFAULT_PROVIDER_CONFIGS.local },
+  };
+}
+
 const DEFAULT_SETTINGS: Settings = {
-  apiKey: '',
-  model: DEFAULT_MODEL,
+  provider: DEFAULT_PROVIDER,
+  providers: defaultProviderConfigs(),
   depth: 'intermediate',
   locale: 'ko',
   toggles: { notes: true, mindmap: true, quiz: true, flashcards: true, podcast: false },
 };
+
+function persistedSettings(value: unknown): Settings {
+  const defaults: Settings = { ...DEFAULT_SETTINGS, providers: defaultProviderConfigs() };
+  if (!value || typeof value !== 'object') return defaults;
+  const input = value as Record<string, unknown>;
+  const providers = defaultProviderConfigs();
+  const savedProviders = input.providers;
+  if (savedProviders && typeof savedProviders === 'object') {
+    for (const id of Object.keys(providers) as AIProviderId[]) {
+      const saved = (savedProviders as Record<string, unknown>)[id];
+      if (!saved || typeof saved !== 'object') continue;
+      const config = saved as Record<string, unknown>;
+      if (typeof config.apiKey === 'string') providers[id].apiKey = config.apiKey;
+      if (typeof config.model === 'string') providers[id].model = config.model;
+      if (typeof config.baseUrl === 'string') providers[id].baseUrl = config.baseUrl;
+    }
+  }
+
+  // v0.1 Gemini 단일 설정을 제공자별 구조로 자동 승격한다.
+  if (typeof input.apiKey === 'string') providers.gemini.apiKey = input.apiKey;
+  if (typeof input.model === 'string') providers.gemini.model = input.model;
+
+  const toggles = { ...defaults.toggles };
+  if (input.toggles && typeof input.toggles === 'object') {
+    for (const kind of Object.keys(toggles) as ArtifactKind[]) {
+      const saved = (input.toggles as Record<string, unknown>)[kind];
+      if (typeof saved === 'boolean') toggles[kind] = saved;
+    }
+  }
+
+  const depth =
+    input.depth === 'beginner' || input.depth === 'intermediate' || input.depth === 'expert'
+      ? input.depth
+      : defaults.depth;
+  const locale = input.locale === 'en' || input.locale === 'ko' ? input.locale : defaults.locale;
+
+  return {
+    provider: isProviderId(input.provider) ? input.provider : defaults.provider,
+    providers,
+    depth,
+    locale,
+    toggles,
+  };
+}
 
 const ingestControllers = new Map<string, AbortController>();
 let notebookLoadVersion = 0;
@@ -119,9 +182,26 @@ export const useStore = create<StoreState>()(
           });
           return undefined;
         }
-        if (!settings.apiKey.trim()) {
+        const providerConfig = settings.providers[settings.provider];
+        const providerInfo = providerDefinition(settings.provider);
+        if (providerInfo.requiresKey && !providerConfig.apiKey.trim()) {
           set((s) => {
-            s.genError = translate(loc, 'gen.noKey');
+            s.genError = translate(loc, 'gen.noKey', { provider: providerInfo.label });
+          });
+          return undefined;
+        }
+        if (!providerConfig.model.trim()) {
+          set((s) => {
+            s.genError = translate(loc, 'gen.noModel', { provider: providerInfo.label });
+          });
+          return undefined;
+        }
+        if (
+          settings.provider !== 'gemini' &&
+          ready.some((source) => source.mediaRef && !source.text)
+        ) {
+          set((s) => {
+            s.genError = translate(loc, 'gen.mediaRequiresGemini');
           });
           return undefined;
         }
@@ -136,10 +216,10 @@ export const useStore = create<StoreState>()(
           s.genError = undefined;
         });
         try {
-          // AI 레이어(@google/genai)는 생성 시점에만 동적 로드 → 메인 번들에서 분리
-          const { GeminiProvider } = await import('../ai/gemini');
+          // 선택한 AI 어댑터는 생성 시점에만 동적 로드한다.
+          const { createLlmProvider } = await import('../ai/factory');
           const { orchestrate } = await import('../ai/orchestrator');
-          const provider = new GeminiProvider(settings.apiKey, settings.model);
+          const provider = await createLlmProvider(settings.provider, providerConfig);
           const artifacts = await orchestrate(
             provider,
             ready,
@@ -223,7 +303,7 @@ export const useStore = create<StoreState>()(
       },
 
       addFiles: async (files) => {
-        const apiKey = get().settings.apiKey;
+        const apiKey = get().settings.providers.gemini.apiKey;
         await Promise.all(
           files.map(async (file) => {
             const id = newId();
@@ -370,13 +450,21 @@ export const useStore = create<StoreState>()(
         return id;
       },
 
-      setApiKey: (key) =>
+      setProvider: (provider) =>
         set((s) => {
-          s.settings.apiKey = key;
+          s.settings.provider = provider;
         }),
-      setModel: (model) =>
+      setProviderApiKey: (provider, key) =>
         set((s) => {
-          s.settings.model = model;
+          s.settings.providers[provider].apiKey = key;
+        }),
+      setProviderModel: (provider, model) =>
+        set((s) => {
+          s.settings.providers[provider].model = model;
+        }),
+      setProviderBaseUrl: (provider, baseUrl) =>
+        set((s) => {
+          s.settings.providers[provider].baseUrl = baseUrl;
         }),
       setDepth: (depth) =>
         set((s) => {
@@ -395,6 +483,10 @@ export const useStore = create<StoreState>()(
       name: 'sf-store',
       // 설정만 영속(BYOK: 키는 이 브라우저 localStorage 에만). sources 는 휘발성.
       partialize: (s) => ({ settings: s.settings }),
+      merge: (saved, current) => {
+        const state = saved as { settings?: unknown } | undefined;
+        return { ...current, settings: persistedSettings(state?.settings) };
+      },
     },
   ),
 );

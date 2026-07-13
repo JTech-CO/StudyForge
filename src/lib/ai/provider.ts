@@ -62,6 +62,7 @@ export interface PodcastTurn {
 // 텍스트·구조화 생성 — 교체 가능(Gemini→Claude→OpenAI). 구현은 M2.
 export interface LLMProvider {
   readonly name: string;
+  readonly maxConcurrency?: number;
   generateNotes(ctx: SourceContext[], opt: GenerateOptions): Promise<NotesResult>;
   generateMindmap(ctx: SourceContext[], opt: GenerateOptions): Promise<string>; // markmap용 MD 아웃라인
   generateQuiz(ctx: SourceContext[], opt: GenerateOptions): Promise<QuizItem[]>;

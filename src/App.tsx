@@ -6,10 +6,9 @@ import { Drawer } from './components/layout/Drawer';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
 import { useTheme, type Theme } from './hooks/useTheme';
-import { useApiKey } from './hooks/useApiKey';
 import { useT } from './hooks/useT';
 import { useStore } from './lib/store';
-import { GEMINI_MODEL_OPTIONS } from './lib/ai/models';
+import { PROVIDERS, PROVIDER_MODEL_OPTIONS, providerDefinition } from './lib/ai/models';
 import type { Locale } from './lib/ai/provider';
 import Home from './pages/Home';
 import Notebook from './pages/Notebook';
@@ -30,13 +29,59 @@ const RADIO_SPAN =
 
 function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { theme, setTheme } = useTheme();
-  const { apiKey, setApiKey } = useApiKey();
   const { t } = useT();
-  const locale = useStore((s) => s.settings.locale);
+  const settings = useStore((s) => s.settings);
+  const setProvider = useStore((s) => s.setProvider);
+  const setProviderApiKey = useStore((s) => s.setProviderApiKey);
+  const setProviderModel = useStore((s) => s.setProviderModel);
+  const setProviderBaseUrl = useStore((s) => s.setProviderBaseUrl);
   const setLocale = useStore((s) => s.setLocale);
-  const model = useStore((s) => s.settings.model);
-  const setModel = useStore((s) => s.setModel);
+  const provider = settings.provider;
+  const config = settings.providers[provider];
+  const providerInfo = providerDefinition(provider);
   const [showKey, setShowKey] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [discoveredModels, setDiscoveredModels] = useState<string[]>([]);
+  const [connection, setConnection] = useState<{ kind: 'success' | 'error'; text: string } | null>(
+    null,
+  );
+
+  const modelOptions = Array.from(
+    new Map(
+      [
+        ...PROVIDER_MODEL_OPTIONS[provider],
+        ...discoveredModels.map((id) => ({ id, label: id })),
+      ].map((option) => [option.id, option]),
+    ).values(),
+  );
+
+  function changeProvider(next: typeof provider) {
+    setProvider(next);
+    setShowKey(false);
+    setDiscoveredModels([]);
+    setConnection(null);
+  }
+
+  async function checkConnection() {
+    setChecking(true);
+    setConnection(null);
+    try {
+      const { testProviderConnection } = await import('./lib/ai/factory');
+      const models = await testProviderConnection(provider, config);
+      setDiscoveredModels(models);
+      setConnection({
+        kind: 'success',
+        text: t('settings.connectionOk', { n: models.length }),
+      });
+    } catch (error) {
+      setConnection({
+        kind: 'error',
+        text: error instanceof Error ? error.message : t('settings.connectionFailed'),
+      });
+    } finally {
+      setChecking(false);
+    }
+  }
 
   return (
     <Modal open={open} onClose={onClose} title={t('settings.title')}>
@@ -67,7 +112,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
                 <input
                   type="radio"
                   name="settings-locale"
-                  checked={locale === o.id}
+                  checked={settings.locale === o.id}
                   onChange={() => setLocale(o.id)}
                   className="peer sr-only"
                 />
@@ -77,61 +122,126 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium text-fg">{t('settings.provider')}</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {PROVIDERS.map((option) => (
+              <label key={option.id} className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="settings-provider"
+                  checked={provider === option.id}
+                  onChange={() => changeProvider(option.id)}
+                  className="peer sr-only"
+                />
+                <span className={RADIO_SPAN}>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {provider === 'local' && (
+          <section className="flex flex-col gap-2">
+            <label htmlFor="ai-base-url" className="text-sm font-medium text-fg">
+              {t('settings.baseUrl')}
+            </label>
+            <input
+              id="ai-base-url"
+              type="url"
+              value={config.baseUrl}
+              onChange={(event) => setProviderBaseUrl(provider, event.target.value)}
+              placeholder="http://127.0.0.1:11434/v1"
+              autoComplete="off"
+              spellCheck={false}
+              className="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-fg placeholder:text-muted focus-visible:border-accent"
+            />
+            <p className="text-xs text-muted">{t('settings.localHint')}</p>
+          </section>
+        )}
+
         <section className="flex flex-col gap-2">
-          <label htmlFor="api-key" className="text-sm font-medium text-fg">
-            {t('settings.apiKey')}
+          <label htmlFor="ai-api-key" className="text-sm font-medium text-fg">
+            {t(provider === 'local' ? 'settings.apiKeyOptional' : 'settings.apiKey', {
+              provider: providerInfo.label,
+            })}
           </label>
           <div className="flex gap-2">
             <input
-              id="api-key"
+              id="ai-api-key"
               type={showKey ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="AIza..."
+              value={config.apiKey}
+              onChange={(event) => setProviderApiKey(provider, event.target.value)}
+              placeholder={providerInfo.keyPlaceholder}
               autoComplete="off"
               spellCheck={false}
               className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus-visible:border-accent"
             />
-            <Button variant="ghost" type="button" onClick={() => setShowKey((v) => !v)} aria-pressed={showKey}>
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowKey((value) => !value)}
+              aria-pressed={showKey}
+            >
               {showKey ? t('settings.hide') : t('settings.show')}
             </Button>
           </div>
-          <p className="text-xs text-muted">
-            {t('settings.keyNotice')}{' '}
+          {providerInfo.keyUrl && (
             <a
-              href="https://aistudio.google.com/apikey"
+              href={providerInfo.keyUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-accent underline underline-offset-2"
+              className="w-fit text-xs text-accent underline underline-offset-2"
             >
               {t('settings.getKey')}
             </a>
-          </p>
+          )}
         </section>
 
         <section className="flex flex-col gap-2">
-          <label htmlFor="gemini-model" className="text-sm font-medium text-fg">
+          <label htmlFor="ai-model" className="text-sm font-medium text-fg">
             {t('settings.model')}
           </label>
-          <select
-            id="gemini-model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg focus-visible:border-accent"
-          >
-            {GEMINI_MODEL_OPTIONS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
+          <input
+            id="ai-model"
+            list="ai-model-options"
+            value={config.model}
+            onChange={(event) => setProviderModel(provider, event.target.value)}
+            placeholder={t('settings.modelPlaceholder')}
+            autoComplete="off"
+            spellCheck={false}
+            className="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-fg placeholder:text-muted focus-visible:border-accent"
+          />
+          <datalist id="ai-model-options">
+            {modelOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
               </option>
             ))}
-          </select>
+          </datalist>
           <p className="text-xs text-muted">{t('settings.modelNote')}</p>
         </section>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <Button type="button" variant="ghost" loading={checking} onClick={checkConnection}>
+            {checking ? t('settings.checking') : t('settings.checkConnection')}
+          </Button>
+          {connection && (
+            <p
+              className={connection.kind === 'error' ? 'text-xs text-error' : 'text-xs text-success'}
+              role={connection.kind === 'error' ? 'alert' : 'status'}
+            >
+              {connection.text}
+            </p>
+          )}
+          <p className="text-xs text-muted">{t('settings.keyNotice')}</p>
+          {provider !== 'gemini' && (
+            <p className="text-xs text-muted">{t('settings.mediaProviderNotice')}</p>
+          )}
+        </div>
       </div>
     </Modal>
   );
 }
-
 function Footer() {
   const { t } = useT();
   return (

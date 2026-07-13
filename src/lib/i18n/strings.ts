@@ -37,15 +37,27 @@ const ko: Record<string, string> = {
   'settings.title': '설정',
   'settings.theme': '테마',
   'settings.language': '언어',
-  'settings.apiKey': 'Gemini API 키 (BYOK)',
+  'settings.provider': 'AI 제공자',
+  'settings.apiKey': '{provider} API 키 (BYOK)',
+  'settings.apiKeyOptional': '{provider} API 토큰 (선택)',
   'settings.show': '표시',
   'settings.hide': '숨김',
   'settings.keyNotice':
-    '키는 이 브라우저(localStorage)에만 저장되며 자체 서버로 전송되지 않습니다. 오디오·영상 업로드와 생성에 사용됩니다.',
+    '키·토큰과 생성에 사용한 자료는 선택한 AI 제공자에게 직접 전송됩니다. 키는 이 브라우저(localStorage)에만 저장되며 StudyForge 서버에는 전송되지 않습니다. 공용 기기에서는 사용하지 마세요.',
   'settings.getKey': '키 발급',
-  'settings.model': '생성 모델',
+  'settings.baseUrl': 'OpenAI 호환 엔드포인트',
+  'settings.localHint':
+    'Ollama는 보통 http://127.0.0.1:11434/v1, LM Studio는 http://127.0.0.1:1234/v1 입니다. 서버에서 StudyForge 출처의 CORS를 허용해야 합니다.',
+  'settings.model': '생성 모델 ID',
+  'settings.modelPlaceholder': '모델 ID 입력',
   'settings.modelNote':
-    '한도 초과(429)·크레딧 소진 시 더 가벼운 모델(Flash-Lite)로 바꿔 보세요. Pro 는 무료 한도가 없습니다.',
+    '권장 모델을 선택하거나 제공자가 지원하는 모델 ID를 직접 입력할 수 있습니다.',
+  'settings.checkConnection': '연결 확인 및 모델 조회',
+  'settings.checking': '연결 확인 중…',
+  'settings.connectionOk': '연결 성공 · 사용 가능한 모델 {n}개',
+  'settings.connectionFailed': 'AI 제공자 연결에 실패했습니다.',
+  'settings.mediaProviderNotice':
+    '유튜브·오디오·영상 원본 처리와 팟캐스트 음성 합성은 Gemini 전용입니다. 텍스트 생성은 현재 선택한 제공자를 사용합니다.',
 
   // 푸터 / 404 / 스킵
   'footer.tagline': 'StudyForge — 학습 자료 생성기 · 오픈소스(BYOK)',
@@ -204,7 +216,9 @@ const ko: Record<string, string> = {
 
   // 생성 오류(스토어)
   'gen.noSources': '생성할 준비된 자료가 없습니다. 자료를 먼저 추가하세요.',
-  'gen.noKey': 'Gemini API 키가 필요합니다. 설정(우측 상단)에서 키를 입력하세요.',
+  'gen.noKey': '{provider} API 키가 필요합니다. 설정(우측 상단)에서 입력하세요.',
+  'gen.noModel': '{provider} 모델 ID가 필요합니다.',
+  'gen.mediaRequiresGemini': '유튜브·오디오·영상 자료를 직접 생성하려면 Gemini를 선택하세요.',
   'gen.noToggle': '생성할 산출물을 하나 이상 켜세요.',
   'gen.failed': '생성에 실패했습니다.',
   'notebook.shareFailed': '공유 링크 생성에 실패했습니다.',
@@ -248,15 +262,27 @@ const en: Record<string, string> = {
   'settings.title': 'Settings',
   'settings.theme': 'Theme',
   'settings.language': 'Language',
-  'settings.apiKey': 'Gemini API key (BYOK)',
+  'settings.provider': 'AI provider',
+  'settings.apiKey': '{provider} API key (BYOK)',
+  'settings.apiKeyOptional': '{provider} API token (optional)',
   'settings.show': 'Show',
   'settings.hide': 'Hide',
   'settings.keyNotice':
-    'Your key is stored only in this browser (localStorage) and is never sent to our servers. Used for audio/video upload and generation.',
+    'Keys, tokens, and generation inputs are sent directly to the selected AI provider. Keys stay in this browser (localStorage) and are never sent to a StudyForge server. Do not use this on a shared device.',
   'settings.getKey': 'Get a key',
-  'settings.model': 'Generation model',
+  'settings.baseUrl': 'OpenAI-compatible endpoint',
+  'settings.localHint':
+    'Ollama usually uses http://127.0.0.1:11434/v1 and LM Studio uses http://127.0.0.1:1234/v1. The server must allow the StudyForge origin through CORS.',
+  'settings.model': 'Generation model ID',
+  'settings.modelPlaceholder': 'Enter a model ID',
   'settings.modelNote':
-    'On quota errors (429) or depleted credits, switch to a lighter model (Flash-Lite). Pro has no free tier.',
+    'Choose a recommended model or enter any model ID supported by the provider.',
+  'settings.checkConnection': 'Check connection and models',
+  'settings.checking': 'Checking connection…',
+  'settings.connectionOk': 'Connected · {n} available models',
+  'settings.connectionFailed': 'Could not connect to the AI provider.',
+  'settings.mediaProviderNotice':
+    'YouTube, audio/video source processing, and podcast speech synthesis remain Gemini-only. Text artifacts use the selected provider.',
 
   'footer.tagline': 'StudyForge — study material generator · Open source (BYOK)',
   'notFound.title': 'Page not found',
@@ -401,7 +427,9 @@ const en: Record<string, string> = {
   'render.failed': 'Error while rendering {label}.',
 
   'gen.noSources': 'No ready sources to generate from. Add material first.',
-  'gen.noKey': 'A Gemini API key is required. Enter one in Settings (top right).',
+  'gen.noKey': 'A {provider} API key is required. Enter it in Settings (top right).',
+  'gen.noModel': 'A {provider} model ID is required.',
+  'gen.mediaRequiresGemini': 'Select Gemini to generate directly from YouTube, audio, or video sources.',
   'gen.noToggle': 'Turn on at least one artifact to generate.',
   'gen.failed': 'Generation failed.',
   'notebook.shareFailed': 'Failed to create the share link.',

@@ -5,6 +5,8 @@
 
 ---
 
+> **Post-MVP 업데이트 (2026-07)**: 텍스트 생성은 Gemini·OpenAI·Anthropic·xAI·OpenAI 호환 로컬 AI를 런타임에 선택한다. 미디어 입력과 멀티스피커 TTS는 Gemini 전용으로 유지한다. 아래 Gemini 단일 결정 근거는 원래 MVP의 역사적 기준으로 보존한다.
+
 ## 0. 이 문서의 사용법 (Claude Code)
 
 1. **섹션 8(작업 규약)을 그대로 `CLAUDE.md`로 복사**한 뒤 프로젝트 루트에 둔다. 이후 모든 세션은 그 규약을 따른다.
@@ -36,7 +38,7 @@
 ### 차별화 포인트 (원본 대비 우위 — 반드시 구현)
 1. **코드블록 인식 + 언어별 문법 하이라이팅** — 프로그래머 타깃 갭. 노트 생성 프롬프트가 코드를 언어 태그 붙은 펜스 블록으로 보존하고, 렌더는 Shiki(VS Code 테마) 사용.
 2. **노트 공유 링크화** — 원본은 이미지 저장만 되고 링크 공유가 없음. 읽기 전용 공유 URL 제공.
-3. **인위적 제한 제거** — 셀프호스팅 + BYOK이므로 "하루 3개 / 자료 1개 / 3MB / 15분 / 퀴즈·팟캐스트 미지원" 같은 무료판 제약이 전부 사라진다. 한도는 오직 사용자 자신의 Gemini 쿼터.
+3. **인위적 제한 제거** — 셀프호스팅 + BYOK이므로 "하루 3개 / 자료 1개 / 3MB / 15분 / 퀴즈·팟캐스트 미지원" 같은 무료판 제약이 전부 사라진다. 한도는 선택한 AI 제공자의 쿼터 또는 로컬 하드웨어 성능에 따른다.
 
 ---
 
@@ -52,19 +54,19 @@
 - 영속화: **IndexedDB(idb 또는 Dexie)** — 노트북 보관. 설정·API 키는 localStorage.
 - 노트 → 이미지: **html-to-image** (DOM → PNG).
 
-### AI 레이어 — Gemini 단일 + 어댑터
-- 텍스트·구조화 생성: **Gemini Flash 계열**(빠르고 저렴, responseSchema 지원). 심화 노트는 **Gemini Pro 계열** 옵션.
+### AI 레이어 — 멀티 제공자 + Gemini 미디어
+- 텍스트·구조화 생성: **Gemini / OpenAI / Anthropic / xAI / OpenAI 호환 로컬 AI** 중 선택. 권장 모델과 사용자 지정 모델 ID 지원.
 - 전사: 유튜브 URL·오디오·영상을 **Gemini가 네이티브 처리**(별도 Whisper 불필요).
 - TTS: **Gemini 멀티스피커 TTS**(2인 음성).
-- **모든 텍스트 생성은 `LLMProvider` 인터페이스 뒤에 둔다**(섹션 3.3). 추후 ClaudeProvider/OpenAIProvider로 교체 가능. 전사·TTS는 `MediaProvider`로 분리(현재 Gemini 구현, ElevenLabs 등 pluggable).
+- **모든 텍스트 생성은 `LLMProvider` 인터페이스 뒤에 둔다**(섹션 3.3). 제공자 어댑터는 생성 시 동적 로드한다. 전사·TTS는 `MediaProvider`로 분리(현재 Gemini 구현).
 
 ### 선택적 서버리스 레이어 (없어도 코어 동작)
 - **Cloudflare Workers + KV** — 공유 링크 저장용. 무료 티어로 충분.
 - (선택) HWP5 변환 폴백, CORS 프록시.
 - **핵심 원칙**: 서버리스 없이도 GitHub Pages 정적 배포 + BYOK로 전 기능(공유 링크 제외) 동작. 공유 링크는 점진적 향상(progressive enhancement). 서버 미설정 시 "MD/이미지 내보내기"로 자연 강등.
 
-### 왜 Gemini 단일인가 (요약)
-전사·요약·구조화·TTS·(향후)이미지를 **한 벤더로 일원화** → 1인 유지보수 부담 최소화. 유튜브 URL 네이티브 처리로 다운로드 서버 불필요. 텍스트 생성부만 어댑터로 빼서 벤더 락인을 회피.
+### Gemini 미디어 경로 유지 이유
+유튜브 URL·오디오·영상 네이티브 처리와 멀티스피커 TTS는 Gemini가 한 경로로 제공하므로 별도 다운로드·전사 서버 없이 유지한다. 텍스트 산출물은 멀티 제공자로 분리해 벤더 락인을 줄인다.
 
 ---
 
@@ -196,7 +198,7 @@ export interface MediaProvider {
 ### 3.4 상태 모델
 - `sources: SourceContext[]`
 - `artifacts: { notes?, mindmap?, quiz?, flashcards?, podcast? }` (토글로 생성된 것만 채워짐)
-- `settings: { apiKey, depth, locale, toggles, voices }`
+- `settings: { provider, providers: { apiKey, model, baseUrl }, depth, locale, toggles }`
 - 노트북 = `{ id, title, sources(meta only), artifacts, createdAt }` → IndexedDB.
 
 ---

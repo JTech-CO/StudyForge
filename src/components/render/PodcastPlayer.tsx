@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PodcastTurn } from '../../lib/ai/provider';
-import { useStore } from '../../lib/store';
+import { useApiKey } from '../../hooks/useApiKey';
 import { DEFAULT_VOICES } from '../../lib/ai/models';
 import { Button } from '../ui/Button';
 import { cx } from '../../utils/cx';
@@ -12,7 +12,7 @@ import { useT } from '../../hooks/useT';
  */
 export function PodcastPlayer({ turns }: { turns: PodcastTurn[] }) {
   const { t } = useT();
-  const apiKey = useStore((s) => s.settings.apiKey);
+  const { apiKey } = useApiKey('gemini');
   const [synthesizing, setSynthesizing] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

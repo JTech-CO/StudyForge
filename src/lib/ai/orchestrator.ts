@@ -27,6 +27,30 @@ export interface ArtifactToggles {
 
 type ArtifactKey = 'notes' | 'mindmapMd' | 'quiz' | 'flashcards' | 'podcast';
 
+async function settleTasks(
+  tasks: { run: () => Promise<unknown> }[],
+  requestedLimit: number,
+): Promise<PromiseSettledResult<unknown>[]> {
+  const results = new Array<PromiseSettledResult<unknown>>(tasks.length);
+  const limit = Math.max(1, Math.min(requestedLimit, tasks.length));
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < tasks.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      try {
+        results[index] = { status: 'fulfilled', value: await tasks[index].run() };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: limit }, () => worker()));
+  return results;
+}
+
 const LABELS: Record<ArtifactKey, string> = {
   notes: '노트',
   mindmapMd: '마인드맵',
@@ -57,7 +81,7 @@ export async function orchestrate(
     tasks.push({ key: 'podcast', run: () => provider.generatePodcastScript(sources, opt) });
   }
 
-  const settled = await Promise.allSettled(tasks.map((t) => t.run()));
+  const settled = await settleTasks(tasks, provider.maxConcurrency ?? tasks.length);
   const out: GeneratedArtifacts = { errors: {} };
 
   settled.forEach((r, i) => {

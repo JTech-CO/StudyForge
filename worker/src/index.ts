@@ -20,8 +20,8 @@ const CORS: Record<string, string> = {
   'Access-Control-Allow-Headers': 'content-type',
 };
 
-// 혼동문자 제외(no i/l/o/0/1) 영숫자 32자. 256 % 32 === 0 이라 모듈로 편향 없음.
-const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+// 혼동 문자(i/l/o/0/1)를 제외하고 rejection sampling으로 모듈로 편향을 없앤다.
+const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const SHARE_CODE = /^(?:[a-hjkmnp-z2-9]{8}|[a-hjkmnp-z2-9]{10})$/;
 const MAX_PAYLOAD_BYTES = 2_000_000;
 
@@ -81,10 +81,17 @@ async function readBodyLimited(req: Request): Promise<string | null> {
 }
 
 function makeId(len = 8): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(len));
-  let s = '';
-  for (const b of bytes) s += ALPHABET[b % ALPHABET.length];
-  return s;
+  const unbiasedLimit = 256 - (256 % ALPHABET.length);
+  let id = '';
+  while (id.length < len) {
+    const bytes = crypto.getRandomValues(new Uint8Array(len - id.length));
+    for (const byte of bytes) {
+      if (byte >= unbiasedLimit) continue;
+      id += ALPHABET[byte % ALPHABET.length];
+      if (id.length === len) break;
+    }
+  }
+  return id;
 }
 
 // KV read-then-write avoids observed collisions; strict atomic uniqueness requires a Durable Object.

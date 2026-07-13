@@ -13,12 +13,12 @@
 
 ### 1.2. 목적 (Purpose)
 강의·문서·영상·녹음 등 이질적 입력을 받아, **학습자 수준에 맞춘 깊이**로 구조화 노트·마인드맵·퀴즈·플래시카드·팟캐스트를 자동 생성하고 **Notion 호환 Markdown**으로 내보내는 클라이언트 우선 웹앱을 구축한다.
-- 기존 SaaS의 인위적 제약(일 3개 / 자료 1개 / 3MB / 녹음 15분 / 퀴즈·팟캐스트·내보내기 유료 잠금)을 **셀프호스팅 + BYOK**로 제거한다. 한도는 오직 사용자 자신의 Gemini 쿼터.
+- 기존 SaaS의 인위적 제약(일 3개 / 자료 1개 / 3MB / 녹음 15분 / 퀴즈·팟캐스트·내보내기 유료 잠금)을 **셀프호스팅 + BYOK**로 제거한다. 한도는 사용자가 선택한 AI 제공자의 쿼터와 로컬 하드웨어 성능에 따른다.
 - 서버 운영 비용 0을 목표로 하며, 공유 링크 등 서버가 필요한 기능만 선택적 서버리스로 분리한다.
 
 ### 1.3. 핵심 차별점 (Key Differentiators)
 1.  **코드 인식 & 하이라이팅**: 노트 생성 시 코드를 언어 태그가 붙은 펜스 블록으로 보존하고 Shiki(VS Code 테마)로 렌더 → 개발 학습 자료에서 경쟁 도구 대비 강점.
-2.  **벤더 추상화 (어댑터)**: 텍스트·구조화 생성은 `LLMProvider` 인터페이스 뒤에 두어 Gemini→Claude/OpenAI 교체 가능. 전사·TTS는 `MediaProvider`로 분리해 벤더 락인 회피.
+2.  **벤더 추상화 (어댑터)**: 텍스트·구조화 생성은 `LLMProvider` 인터페이스 뒤에 두어 Gemini·OpenAI·Anthropic·xAI·OpenAI 호환 로컬 모델을 런타임에 선택 가능. 전사·TTS는 `MediaProvider`로 분리해 벤더 락인 회피.
 3.  **클라이언트 우선 + 우아한 강등**: BYOK 정적 배포로 서버 없이 전 기능(공유 제외) 동작. 공유 링크만 선택적 Cloudflare Worker, 미설정 시 MD/PNG 내보내기로 자연 강등.
 
 ## 2. 상세 기능 요구사항 (Detailed Requirements)
@@ -34,7 +34,7 @@
   - **Action**: 생성 트리거 시 토글된 산출물만 비동기 fan-out. 산출물별 진행 상태(스텝/스피너) 노출, 부분 실패는 격리(한 산출물 실패가 전체를 막지 않음).
 - **데이터 검증 (Validation)**:
   - 클라이언트: 파일 MIME/크기, URL 형식, API 키 존재 여부.
-  - 출력: Gemini `responseSchema`로 구조화 출력(JSON) 강제 + 파싱 실패 시 리페어 재시도.
+  - 출력: 제공자의 JSON Schema 기능을 우선 사용하고, 미지원 모델은 JSON 전용 프롬프트로 강등한다. 모든 응답은 런타임 검증하며 파싱 실패 시 리페어 재시도한다.
 
 ### 2.3. 데이터 모델 (Data Model)
 1.  **SourceContext**: `id(UUID)`, `kind(Enum: text|pdf|docx|hwp|hwpx|txt|md|youtube|audio|video)`, `title(String)`, `text?(String)`(문서류 추출 텍스트), `mediaRef?({ youtubeUrl?, fileUri?, mimeType? })`(미디어류), `meta?(Object)`.
@@ -55,12 +55,13 @@
 - **Frontend**: React 18, TypeScript 5, Vite. *(플레인 JS 선호 시 전환 가능하나, 어댑터 타입 안전성·공개 레포 리뷰 가치로 TS 권장.)*
 - **Backend**: 없음(클라이언트 우선). 공유 링크 한정 **Cloudflare Workers**(선택).
 - **Database**: 브라우저 **IndexedDB**(노트북 영속), **localStorage**(설정/API 키), 공유 시 **Cloudflare KV**.
-- **AI**: Google **Gemini** — 생성 + 전사 + 멀티스피커 TTS. 텍스트 생성부는 어댑터로 교체 가능.
+- **AI**: Gemini · OpenAI · Anthropic · xAI · OpenAI 호환 로컬 AI — 텍스트 생성은 제공자별 `LLMProvider`, 미디어 입력·멀티스피커 TTS는 Gemini `MediaProvider`.
 
 ### 3.2. Libraries & Tools
 1.  **@google/genai (Gemini SDK)** (필수)
     - **용도**: 텍스트·구조화 생성, 유튜브 URL/오디오/영상 네이티브 입력, File API 업로드, 멀티스피커 TTS.
     - **설정 값**: `responseSchema`로 JSON 강제, 생성=Flash 계열 / 심화 노트=Pro 계열, TTS=멀티스피커.
+1-1. **브라우저 Fetch 어댑터** (새 의존성 없음) — OpenAI Chat Completions 호환(OpenAI·xAI·Ollama·LM Studio)과 Anthropic Messages API 직접 호출.
 2.  **zustand + immer** (필수) — 전역 상태 관리.
 3.  **react-router-dom** (필수) — 라우팅(`/`, `/notebook/:id`, `/share/:id`).
 4.  **react-markdown + remark-gfm** (필수) — 마크다운 렌더 + GFM 표.
@@ -74,12 +75,12 @@
 12. **html-to-image** (필수) — 노트 PNG 내보내기.
 13. **tailwindcss** (필수) — 스타일링(디자인 토큰 한정, 임의값 금지).
 
-> 버전은 구현 시점 공식 문서로 재확인. Gemini 모델 문자열은 변동 가능하므로 하드코딩 전 검증.
+> 버전과 모델 ID는 구현 시점 공식 문서로 재확인한다. 권장 목록 외 사용자 지정 모델 ID도 허용한다.
 
 ## 4. 아키텍처 및 로직 (Architecture & Logic)
 
 ### 4.1. 상태 관리 전략 (State Management)
-- **Scope**: 전역 = `sources`, 현재 `notebook`, `settings`(apiKey/depth/locale/toggles/voices). 지역 = UI 토글·모달 상태.
+- **Scope**: 전역 = `sources`, 현재 `notebook`, `settings`(provider/providers별 apiKey·model·baseUrl/depth/locale/toggles). 지역 = UI 토글·모달 상태.
 - **Tool**: Zustand Store + Custom Hooks(`useGeneration`, `useNotebook` 등). 영속은 `persist` 레이어가 IndexedDB/localStorage와 동기화.
 
 ```javascript
@@ -87,7 +88,7 @@
 const useStore = create((set, get) => ({
   sources: [],
   notebook: null,
-  settings: { apiKey: '', depth: 'intermediate', locale: 'ko', toggles: {} },
+  settings: { provider: 'gemini', providers: {}, depth: 'intermediate', locale: 'ko', toggles: {} },
   isGenerating: false,
   generate: async () => {
     set({ isGenerating: true });
@@ -101,14 +102,14 @@ const useStore = create((set, get) => ({
 ### 4.2. 주요 동작 파이프라인 (Main Workflow)
 1.  **초기화 (Init)**: localStorage에서 키·설정·테마 복원, IndexedDB에서 노트북 목록 로드.
 2.  **인제스트 (Ingest)**: 소스별 정규화 — 문서류는 클라이언트 텍스트 추출, 유튜브는 URL 래핑, 오디오/영상은 Gemini File API 업로드 → `SourceContext`.
-3.  **생성 (Process)**: 깊이 + 토글 → `orchestrator`가 선택 산출물만 병렬 호출 → `responseSchema` 검증 → 실패 시 리페어.
+3.  **생성 (Process)**: 제공자 + 깊이 + 토글 → `orchestrator`가 제공자 동시성 한도에 맞춰 호출 → JSON Schema/런타임 검증 → 실패 시 리페어.
 4.  **렌더/갱신 (Update)**: 스토어 반영 후 IndexedDB 저장, 산출물 탭 렌더. 영속 데이터 변경은 즉시 반영.
 5.  **내보내기 (Export)**: MD 복사 / 노트 PNG / 공유 링크(서버리스 설정 시).
 
 ### 4.3. 핵심 알고리즘 (Core Algorithms)
-- **산출물 오케스트레이션**: 토글된 Provider 메서드만 `Promise.allSettled`로 병렬 실행, 부분 실패 격리, 항목별 재시도 정책.
+- **산출물 오케스트레이션**: 토글된 Provider 메서드만 제한 병렬 실행(로컬=직렬), 부분 실패 격리, 항목별 재시도 정책.
 - **미디어 라우팅**: `SourceContext.mediaRef` 존재 시 텍스트 대신 미디어 파트를 Gemini에 직접 전달(별도 전사 단계 생략). 유튜브 URL은 `fileData`로 래핑(다운로드 없음).
-- **구조화 출력 검증·리페어**: `responseSchema` 강제 → 파싱 실패 시 "JSON만 반환" 리페어 프롬프트 1회 재시도.
+- **구조화 출력 검증·리페어**: 네이티브 JSON Schema 우선 → 미지원 시 JSON 프롬프트 강등 → 런타임 파싱 실패 시 리페어 프롬프트 1회 재시도.
 - **TTS 청크·스티칭**: 대담 스크립트를 턴 단위로 분할 합성한 뒤 오디오 결합(길이 한계 회피).
 - **블록 격리 렌더**: LaTeX/Mermaid/코드 블록을 개별 try/catch로 감싸 렌더 실패 시 해당 블록만 코드 폴백(앱 전체 안전).
 
